@@ -1,0 +1,45 @@
+---
+/**
+ * Media — the ONLY image entry point on the site (per PLAN.md).
+ *
+ * Wraps Astro's <Image /> and hides the provider behind a stable string id.
+ * Callers never construct URLs; they pass an identifier plus explicit dimensions.
+ */
+import { Image } from "astro:assets";
+import { resolveMediaUrl } from "../lib/media";
+
+interface Props {
+  /** Stable media identifier (e.g. "blog/my-post/cover"). Never a URL or path. */
+  id: string;
+  alt: string;
+  width: number;
+  height: number;
+  loading?: "lazy" | "eager";
+  decoding?: "async" | "sync" | "auto";
+  sizes?: string;
+  class?: string;
+}
+
+const {
+  id,
+  alt,
+  width,
+  height,
+  loading = "lazy",
+  decoding = "async",
+  sizes,
+  class: className,
+} = Astro.props;
+
+const src = resolveMediaUrl(id, { width, height });
+---
+<Image
+  src={src}
+  alt={alt}
+  width={width}
+  height={height}
+  loading={loading}
+  decoding={decoding}
+  sizes={sizes}
+  class={className}
+/>

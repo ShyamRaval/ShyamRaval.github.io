@@ -1,0 +1,66 @@
+---
+/**
+ * Header — notebook-style paper tabs.
+ *
+ * The site name on the left acts as the notebook's spine label and links Home.
+ * Nav items render as paper tabs along the right: rounded-top rectangles that
+ * sit on the header's bottom edge. The active tab is "pulled forward" into
+ * the page surface (white fill, bottom border = white = continuous with page).
+ *
+ * The whole header is sticky, but kept thin to preserve compactness.
+ */
+import { site } from "../data/site";
+
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = "/" } = Astro.props;
+
+const normalize = (p: string) => (p === "/" ? "/" : p.replace(/\/$/, ""));
+const here = normalize(currentPath);
+
+const isActive = (href: string) => {
+  if (href === "/") return here === "/";
+  return here === href || here.startsWith(`${href}/`);
+};
+---
+<header
+  class="sticky top-0 z-30 bg-white/90 backdrop-blur-sm"
+  transition:persist
+  transition:name="site-header"
+>
+  <div class="container-page flex items-end justify-between gap-4 pt-3">
+    {/* Spine label / home link */}
+    <a
+      href="/"
+      class="font-display italic text-xl md:text-2xl pb-2.5 self-end text-[color:var(--color-ink)] hover:text-[color:var(--color-pastel-coral-deep)] transition-colors"
+      aria-label={`${site.name} — home`}
+    >
+      <span class="hidden sm:inline">{site.name}</span>
+      <span class="sm:hidden">{site.shortName}</span>
+    </a>
+
+    {/* Paper tabs — sit on top of the header bottom edge */}
+    <nav aria-label="Primary" class="self-end">
+      <ul class="flex items-end gap-1 -mb-px">
+        {site.nav.map((item) => {
+          const active = isActive(item.href);
+          return (
+            <li>
+              <a
+                href={item.href}
+                class:list={["tab", active && "is-active"]}
+                aria-current={active ? "page" : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  </div>
+
+  <div class="h-px bg-[color:var(--color-edge)]" aria-hidden="true"></div>
+</header>

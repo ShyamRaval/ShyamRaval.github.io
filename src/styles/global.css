@@ -1,5 +1,574 @@
 @import "tailwindcss";
 
-body {
-    @apply bg-gray-900 text-gray-100 min-h-screen font-sans;
+/* ============================================================
+ * Design tokens — soft pastel accents on a quiet white canvas.
+ * Tri-font typography: display serif + body sans + handwritten accent.
+ * Gradients live only in text and small chrome (never full-page washes).
+ * ============================================================ */
+@theme {
+  /* Surfaces */
+  --color-surface: #ffffff;
+  --color-surface-muted: #faf9fc;
+  --color-surface-soft: #fcfafa;
+
+  /* Ink (text) */
+  --color-ink: #1a1530;
+  --color-ink-soft: #4a4566;
+  --color-ink-muted: #7a7591;
+  --color-ink-faint: #b8b3c9;
+
+  /* Borders */
+  --color-edge: #efeaff;
+  --color-edge-strong: #ddd4f5;
+
+  /* Pastel accents */
+  --color-pastel-sky: #aee0f8;
+  --color-pastel-sky-deep: #3fa6db;
+  --color-pastel-coral: #ffc4b8;
+  --color-pastel-coral-deep: #e8624a;
+  --color-pastel-mint: #b6efd6;
+  --color-pastel-mint-deep: #3aaf80;
+  --color-pastel-butter: #ffe6a7;
+  --color-pastel-butter-deep: #d9952e;
+  --color-pastel-lavender: #d9c8ff;
+  --color-pastel-lavender-deep: #8c64ec;
+  --color-pastel-rose: #ffd1ea;
+  --color-pastel-rose-deep: #d35aa3;
+
+  /* Spacing — tighter than v1 to support compact editorial layouts */
+  --spacing-section: 3rem;
+  --spacing-section-lg: 5rem;
+  --spacing-gutter: 1.25rem;
+
+  /* Radii */
+  --radius-tight: 0.5rem;
+  --radius-card: 0.875rem;
+  --radius-pill: 9999px;
+
+  /* Shadows — barely-there, never harsh */
+  --shadow-soft: 0 6px 18px -10px rgba(40, 30, 80, 0.18);
+  --shadow-dock: 0 12px 28px -16px rgba(40, 30, 80, 0.28), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+
+  /* Typography — tri-font system */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Instrument Serif", "Fraunces", ui-serif, Georgia, serif;
+  --font-hand: "Caveat", "Comic Sans MS", cursive;
+}
+
+/* ============================================================
+ * Motion tokens
+ * ============================================================ */
+:root {
+  --motion-duration-instant: 80ms;
+  --motion-duration-fast: 160ms;
+  --motion-duration-base: 280ms;
+  --motion-duration-slow: 520ms;
+  --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --motion-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+ * Base layer
+ * ============================================================ */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    min-height: 100svh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* Leave room for the floating dock so content never gets covered */
+    padding-bottom: 6.5rem;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    line-height: 1.08;
+  }
+
+  /* Instrument Serif sits naturally light; size carries the weight. */
+  h1 { font-size: clamp(2.75rem, 4.6vw + 1rem, 5.25rem); }
+  h2 { font-size: clamp(2rem, 2.4vw + 0.9rem, 3rem); }
+  h3 { font-size: clamp(1.25rem, 0.9vw + 0.9rem, 1.6rem); }
+
+  p { color: var(--color-ink-soft); line-height: 1.65; }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--motion-duration-fast) var(--motion-ease-out);
+  }
+
+  ::selection {
+    background-color: var(--color-pastel-butter);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-pastel-sky-deep);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+/* ============================================================
+ * Utility patterns — small, composable, intentionally few
+ * ============================================================ */
+@layer utilities {
+  .container-page {
+    width: 100%;
+    max-width: 64rem;
+    margin-inline: auto;
+    padding-inline: var(--spacing-gutter);
+  }
+
+  .container-prose {
+    width: 100%;
+    max-width: 48rem;
+    margin-inline: auto;
+    padding-inline: var(--spacing-gutter);
+  }
+
+  /* Font-family shortcuts so components stay free of stack lookups */
+  .font-display { font-family: var(--font-display); }
+  .font-body    { font-family: var(--font-sans); }
+  .font-hand    { font-family: var(--font-hand); }
+
+  /* Gradient text — the only place gradients appear by default */
+  .text-gradient {
+    background: linear-gradient(
+      100deg,
+      var(--color-pastel-coral-deep) 0%,
+      var(--color-pastel-butter-deep) 35%,
+      var(--color-pastel-lavender-deep) 70%,
+      var(--color-pastel-sky-deep) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Handwritten color helpers — small intentional dabs of pastel */
+  .ink-coral    { color: var(--color-pastel-coral-deep); }
+  .ink-sky      { color: var(--color-pastel-sky-deep); }
+  .ink-mint     { color: var(--color-pastel-mint-deep); }
+  .ink-butter   { color: var(--color-pastel-butter-deep); }
+  .ink-lavender { color: var(--color-pastel-lavender-deep); }
+  .ink-rose     { color: var(--color-pastel-rose-deep); }
+
+  /* Pill chips for tags / tools — small and uniform */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.65rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--color-ink);
+    background-color: var(--color-surface-muted);
+    border: 1px solid var(--color-edge);
+  }
+  .chip-sky      { background-color: color-mix(in oklab, var(--color-pastel-sky)      55%, white); border-color: color-mix(in oklab, var(--color-pastel-sky-deep)      30%, transparent); }
+  .chip-coral    { background-color: color-mix(in oklab, var(--color-pastel-coral)    55%, white); border-color: color-mix(in oklab, var(--color-pastel-coral-deep)    30%, transparent); }
+  .chip-mint     { background-color: color-mix(in oklab, var(--color-pastel-mint)     55%, white); border-color: color-mix(in oklab, var(--color-pastel-mint-deep)     30%, transparent); }
+  .chip-butter   { background-color: color-mix(in oklab, var(--color-pastel-butter)   55%, white); border-color: color-mix(in oklab, var(--color-pastel-butter-deep)   30%, transparent); }
+  .chip-lavender { background-color: color-mix(in oklab, var(--color-pastel-lavender) 55%, white); border-color: color-mix(in oklab, var(--color-pastel-lavender-deep) 30%, transparent); }
+  .chip-rose     { background-color: color-mix(in oklab, var(--color-pastel-rose)     55%, white); border-color: color-mix(in oklab, var(--color-pastel-rose-deep)     30%, transparent); }
+
+  /* Editorial card — a quiet container; no gradient chrome */
+  .card-quiet {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+    transition:
+      transform var(--motion-duration-base) var(--motion-ease-out),
+      border-color var(--motion-duration-fast) var(--motion-ease-out);
+  }
+  .card-quiet:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-edge-strong);
+  }
+
+  /* Section spacing */
+  .section { padding-block: var(--spacing-section); }
+  .section-lg { padding-block: var(--spacing-section-lg); }
+
+  /* In-text underline that grows on hover — quiet link affordance */
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size var(--motion-duration-base) var(--motion-ease-out);
+  }
+  .link-underline:hover { background-size: 100% 1px; }
+
+  /* Editorial two-column row (collapses to single column on mobile) */
+  .row-editorial {
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 768px) {
+    .row-editorial {
+      grid-template-columns: minmax(0, 0.42fr) minmax(0, 1fr);
+      gap: 3.5rem;
+    }
+  }
+
+  /* Reveal animations */
+  .reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: reveal-up var(--motion-duration-slow) var(--motion-ease-out) forwards;
+  }
+  .reveal-stagger > * {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: reveal-up var(--motion-duration-slow) var(--motion-ease-out) forwards;
+  }
+  .reveal-stagger > *:nth-child(1) { animation-delay: 40ms; }
+  .reveal-stagger > *:nth-child(2) { animation-delay: 110ms; }
+  .reveal-stagger > *:nth-child(3) { animation-delay: 180ms; }
+  .reveal-stagger > *:nth-child(4) { animation-delay: 250ms; }
+  .reveal-stagger > *:nth-child(5) { animation-delay: 320ms; }
+  .reveal-stagger > *:nth-child(6) { animation-delay: 390ms; }
+  .reveal-stagger > *:nth-child(n+7) { animation-delay: 460ms; }
+
+  /* ============================================================
+   * Paper tab — notebook-style nav tabs that "stick out" of the header.
+   * Active tab is pulled forward (white fill, no bottom border).
+   * ============================================================ */
+  .tab {
+    display: inline-block;
+    padding: 0.45rem 0.9rem 0.4rem;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 0.95rem;
+    line-height: 1;
+    color: var(--color-ink-muted);
+    background-color: var(--color-surface-muted);
+    border: 1px solid var(--color-edge);
+    border-bottom: 1px solid var(--color-edge);
+    border-radius: 0.6rem 0.6rem 0 0;
+    transition:
+      color var(--motion-duration-fast) var(--motion-ease-out),
+      background-color var(--motion-duration-fast) var(--motion-ease-out),
+      transform var(--motion-duration-fast) var(--motion-ease-out);
+  }
+  .tab:hover {
+    color: var(--color-ink);
+    background-color: #fff;
+    transform: translateY(-1px);
+  }
+  .tab.is-active {
+    color: var(--color-ink);
+    background-color: #fff;
+    border-bottom-color: #fff;
+  }
+
+  /* ============================================================
+   * Two-state dock — floating pill at the bottom of the viewport.
+   *
+   * Resting:  textual invitation ("socials — say hello") at compact size.
+   * Expanded: row of brand-tinted icons in a much wider pill.
+   *
+   * The expanded state is triggered by ANY of:
+   *   - desktop:  :hover or :focus-within on the dock shell
+   *   - touch:    `.is-dragging` class (added by the touch-drag handler
+   *               in Footer.astro on touchstart on an icon)
+   *
+   * Size transitions deliberately run slower (~380ms) than the
+   * crossfades so the grow feels like a real movement, not a snap.
+   * ============================================================ */
+
+  /* === Base dock shell — compact resting state === */
+  .dock-shell {
+    position: fixed;
+    left: 50%;
+    bottom: 1.1rem;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: grid;
+    grid-template-areas: "stack";
+    align-items: center;
+    justify-items: center;
+    padding: 0.4rem 1rem;
+    min-height: 2.5rem;
+    background-color: rgba(255, 255, 255, 0.86);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-dock);
+    transition:
+      padding 380ms var(--motion-ease-out),
+      min-width 380ms var(--motion-ease-out),
+      min-height 380ms var(--motion-ease-out),
+      background-color 280ms var(--motion-ease-out);
+  }
+
+  .dock-resting,
+  .dock-icons {
+    grid-area: stack;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+  .dock-resting {
+    gap: 0.3rem;
+    opacity: 1;
+    transform: translateY(0);
+    color: var(--color-ink);
+    transition:
+      opacity 260ms var(--motion-ease-out),
+      transform 320ms var(--motion-ease-out);
+  }
+  .dock-icons {
+    gap: 0.15rem;
+    opacity: 0;
+    transform: translateY(4px);
+    pointer-events: none;
+    transition:
+      opacity 260ms var(--motion-ease-out),
+      transform 320ms var(--motion-ease-out),
+      width 380ms var(--motion-ease-out),
+      gap 380ms var(--motion-ease-out);
+  }
+
+  .dock-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2rem;
+    width: 2rem;
+    border-radius: var(--radius-pill);
+    color: var(--color-ink-soft);
+    /* Touch-drag interactions own their own gesture; prevent the browser
+     * from hijacking with scroll/zoom while the finger is on an icon. */
+    touch-action: none;
+    transition:
+      height 380ms var(--motion-ease-out),
+      width 380ms var(--motion-ease-out),
+      color var(--motion-duration-fast) var(--motion-ease-out),
+      background-color var(--motion-duration-fast) var(--motion-ease-out),
+      transform var(--motion-duration-fast) var(--motion-ease-out);
+  }
+  .dock-icon:hover,
+  .dock-icon:focus-visible,
+  .dock-icon.is-active {
+    background-color: var(--color-surface-muted);
+    transform: translateY(-1px);
+  }
+  .dock-icon svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    transition:
+      width 380ms var(--motion-ease-out),
+      height 380ms var(--motion-ease-out);
+  }
+
+  /* === Expanded state — desktop hover/focus OR touch press-and-hold ===
+   * The dock grows because the ICONS grow, not because empty space is
+   * inserted between them. Gap stays modest so the user can slide / aim
+   * without crossing meaningless whitespace. The shell sizes itself to
+   * whatever the bigger icons + modest gap occupy.
+   */
+  .dock-shell:hover,
+  .dock-shell:focus-within,
+  .dock-shell.is-dragging {
+    padding: 0.7rem 0.9rem;
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+  .dock-shell:hover .dock-resting,
+  .dock-shell:focus-within .dock-resting,
+  .dock-shell.is-dragging .dock-resting {
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
+  }
+  .dock-shell:hover .dock-icons,
+  .dock-shell:focus-within .dock-icons,
+  .dock-shell.is-dragging .dock-icons {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    gap: 0.45rem;
+  }
+  .dock-shell:hover .dock-icon,
+  .dock-shell:focus-within .dock-icon,
+  .dock-shell.is-dragging .dock-icon {
+    height: 3.75rem;
+    width: 3.75rem;
+  }
+  .dock-shell:hover .dock-icon svg,
+  .dock-shell:focus-within .dock-icon svg,
+  .dock-shell.is-dragging .dock-icon svg {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+
+  /* Touch devices: skip the resting state entirely; icons are visible
+   * from the start at a finger-friendly size (Apple HIG min 44px /
+   * Material 48dp). The press-and-hold expanded state then goes one
+   * tier larger again for the easier slide-target. */
+  @media (hover: none) and (pointer: coarse) {
+    .dock-shell {
+      bottom: 1.4rem;
+      padding: 0.6rem 0.7rem;
+      min-height: 4rem;
+    }
+    .dock-resting { opacity: 0; pointer-events: none; }
+    .dock-icons {
+      opacity: 1;
+      pointer-events: auto;
+      transform: none;
+      gap: 0.5rem;
+    }
+    .dock-icon {
+      height: 3rem;
+      width: 3rem;
+    }
+    .dock-icon svg {
+      width: 1.35rem;
+      height: 1.35rem;
+    }
+
+    /* Mobile press-and-hold goes one tier larger than the desktop grow.
+     * Same principle — bigger icons, modest gap, no fake whitespace. */
+    .dock-shell.is-dragging {
+      padding: 0.85rem 1rem;
+    }
+    .dock-shell.is-dragging .dock-icons {
+      gap: 0.55rem;
+    }
+    .dock-shell.is-dragging .dock-icon {
+      height: 4.25rem;
+      width: 4.25rem;
+    }
+    .dock-shell.is-dragging .dock-icon svg {
+      width: 2rem;
+      height: 2rem;
+    }
+    .dock-shell.is-dragging .dock-card {
+      bottom: calc(100% + 18px);
+    }
+
+    /* Snappier card transition for drag handoff between icons */
+    .dock-card {
+      transition:
+        opacity 130ms var(--motion-ease-out),
+        transform 180ms var(--motion-ease-spring);
+      bottom: calc(100% + 14px);
+    }
+  }
+
+  /* Brand-tinted hover colors per icon (apply also when touch-dragging) */
+  .dock-icon[data-brand="email"]:hover,
+  .dock-icon[data-brand="email"]:focus-visible,
+  .dock-icon[data-brand="email"].is-active    { color: var(--color-pastel-coral-deep); }
+  .dock-icon[data-brand="github"]:hover,
+  .dock-icon[data-brand="github"]:focus-visible,
+  .dock-icon[data-brand="github"].is-active   { color: #181717; }
+  .dock-icon[data-brand="linkedin"]:hover,
+  .dock-icon[data-brand="linkedin"]:focus-visible,
+  .dock-icon[data-brand="linkedin"].is-active { color: #0a66c2; }
+  .dock-icon[data-brand="x"]:hover,
+  .dock-icon[data-brand="x"]:focus-visible,
+  .dock-icon[data-brand="x"].is-active        { color: #000; }
+
+  /* Floating "business card" above the dock — appears on icon hover/focus */
+  .dock-card {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translate(-50%, 6px) rotate(-1.2deg);
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    padding: 0.45rem 0.7rem;
+    background-color: #fff;
+    border: 1px solid var(--color-edge);
+    border-radius: 0.55rem;
+    box-shadow: var(--shadow-soft);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity var(--motion-duration-fast) var(--motion-ease-out),
+      transform var(--motion-duration-base) var(--motion-ease-spring);
+    z-index: 1;
+  }
+  .dock-card::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, -3px) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    background-color: #fff;
+    border-right: 1px solid var(--color-edge);
+    border-bottom: 1px solid var(--color-edge);
+  }
+  .dock-card-handle {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 0.92rem;
+    color: var(--color-ink);
+    line-height: 1.1;
+  }
+  .dock-card-note {
+    font-family: var(--font-hand);
+    font-size: 1rem;
+    color: var(--color-ink-muted);
+    line-height: 1.1;
+  }
+  .dock-icon:hover .dock-card,
+  .dock-icon:focus-visible .dock-card,
+  .dock-icon.is-active .dock-card {
+    opacity: 1;
+    transform: translate(-50%, 0) rotate(-1.2deg);
+  }
+}
+
+/* ============================================================
+ * Keyframes
+ * ============================================================ */
+@keyframes reveal-up {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+ * Astro View Transitions polish
+ * ============================================================ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--motion-duration-base);
+  animation-timing-function: var(--motion-ease-out);
 }

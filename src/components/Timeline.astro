@@ -1,0 +1,56 @@
+---
+import type { TimelineEntry, TimelineKind } from "../data/timeline";
+
+interface Props {
+  entries: TimelineEntry[];
+}
+
+const { entries } = Astro.props;
+
+const kindAccent: Record<TimelineKind, string> = {
+  milestone: "var(--color-pastel-coral-deep)",
+  work:      "var(--color-pastel-sky-deep)",
+  education: "var(--color-pastel-lavender-deep)",
+  project:   "var(--color-pastel-mint-deep)",
+  life:      "var(--color-pastel-butter-deep)",
+};
+---
+<ol class="reveal-stagger">
+  {entries.map((entry, i) => {
+    const accent = kindAccent[entry.kind ?? "milestone"];
+    const isLast = i === entries.length - 1;
+    return (
+      <li class="grid grid-cols-[3.5rem_1fr] gap-4 group">
+        <div class="relative flex flex-col items-center pt-1">
+          <span
+            class="font-hand text-xl leading-none"
+            style={`color: ${accent};`}
+            aria-hidden="true"
+          >
+            {entry.year}
+          </span>
+          {!isLast && (
+            <span
+              class="mt-2 flex-1 w-px bg-[color:var(--color-edge-strong)]"
+              aria-hidden="true"
+            />
+          )}
+        </div>
+
+        <div class={isLast ? "pb-1" : "pb-6"}>
+          <h3 class="font-display text-lg md:text-xl leading-tight">
+            {entry.title}
+          </h3>
+          {entry.place && (
+            <p class="mt-0.5 text-xs uppercase tracking-[0.16em] text-[color:var(--color-ink-faint)]">
+              {entry.place}
+            </p>
+          )}
+          <p class="mt-1.5 text-sm md:text-[0.95rem] text-[color:var(--color-ink-soft)] leading-relaxed">
+            {entry.description}
+          </p>
+        </div>
+      </li>
+    );
+  })}
+</ol>

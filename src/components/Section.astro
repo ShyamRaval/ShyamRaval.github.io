@@ -1,0 +1,43 @@
+---
+/**
+ * Editorial section wrapper.
+ *
+ * The optional `label` renders as a small handwritten note in the left column
+ * on desktop and stacks above content on mobile (see .row-editorial in global.css).
+ * No "eyebrow / title / intro" trio — pages compose their own headings inline.
+ */
+interface Props {
+  id?: string;
+  label?: string;
+  labelAccent?: "coral" | "sky" | "mint" | "butter" | "lavender" | "rose";
+  size?: "default" | "lg";
+  class?: string;
+}
+
+const {
+  id,
+  label,
+  labelAccent = "coral",
+  size = "default",
+  class: className = "",
+} = Astro.props;
+
+const accentClass = `ink-${labelAccent}`;
+const sizeClass = size === "lg" ? "section-lg" : "section";
+---
+<section id={id} class:list={[sizeClass, className]}>
+  <div class="container-page">
+    {label ? (
+      <div class="row-editorial">
+        <p class:list={["font-hand text-2xl md:text-3xl md:sticky md:top-24 md:self-start", accentClass]}>
+          {label}
+        </p>
+        <div>
+          <slot />
+        </div>
+      </div>
+    ) : (
+      <slot />
+    )}
+  </div>
+</section>

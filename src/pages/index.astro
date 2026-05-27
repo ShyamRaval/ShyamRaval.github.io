@@ -1,8 +1,103 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Section from "../components/Section.astro";
+import Media from "../components/Media.astro";
+import Timeline from "../components/Timeline.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import LogoCloud from "../components/LogoCloud.astro";
+
+import { site } from "../data/site";
+import { timeline } from "../data/timeline";
+import { featuredProjects } from "../data/featured-projects";
 ---
-<Layout>
-	<h1>Astro</h1>
-	<p>Astro is a modern static site builder that delivers lightning-fast performance.</p>
-	<p>Learn more about Astro on the <a href="https://astro.build">Astro website</a>.</p>
-</Layout>
+<BaseLayout title="Home" description={site.seo.defaultDescription}>
+  {/* ============================================================
+      HERO — editorial two-column on desktop, single column on mobile.
+      No CTA buttons by design: the header carries navigation,
+      the dock carries contact. The hero just speaks.
+     ============================================================ */}
+  <section class="container-page pt-12 md:pt-20 pb-10 md:pb-16">
+    <div class="grid gap-10 md:gap-16 md:grid-cols-[1.35fr_0.65fr] md:items-end">
+      <div class="reveal">
+        <p class="font-hand text-2xl md:text-3xl ink-coral -mb-2 md:-mb-3">
+          hello there,
+        </p>
+        <h1 class="font-display leading-[1.02]">
+          I&rsquo;m <span class="italic text-gradient">{site.shortName}</span>
+          &nbsp;&mdash; a developer who likes things to feel <em class="italic">calm</em>.
+        </h1>
+        <p class="mt-6 md:mt-8 max-w-xl text-base md:text-lg text-[color:var(--color-ink-soft)] leading-relaxed">
+          {site.bio}
+        </p>
+        <p class="mt-6 font-hand text-xl ink-lavender">
+          &mdash; {site.shortName}
+        </p>
+      </div>
+
+      <figure class="reveal justify-self-center md:justify-self-end">
+        <div class="rotate-[-2deg] bg-white p-2 border border-[color:var(--color-edge)] shadow-[var(--shadow-soft)] rounded-sm">
+          <div class="overflow-hidden rounded-[2px]">
+            <Media
+              id="shared/profile"
+              alt={`Portrait of ${site.name}`}
+              width={280}
+              height={340}
+              loading="eager"
+              class="block w-52 h-64 md:w-60 md:h-72 object-cover"
+            />
+          </div>
+          <figcaption class="mt-2 mb-1 px-1 font-hand text-base ink-sky text-center">
+            taken with care
+          </figcaption>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  {/* ============================================================
+      ABOUT — handwritten label on the left, prose on the right.
+      Replaces the previous 3-card "values" trio (template thinking
+      we no longer want; see PLAN.md Design Philosophy).
+     ============================================================ */}
+  <Section id="about" label="a bit about me" labelAccent="sky">
+    <div class="prose-clean max-w-2xl">
+      <p class="text-base md:text-lg leading-relaxed text-[color:var(--color-ink-soft)]">
+        I care about thoughtful interfaces, fast websites, and the small details
+        that make software feel kind. Most days I&rsquo;m chasing the
+        intersection of <em class="italic ink-coral">good typography</em>,
+        <em class="italic ink-mint"> useful motion</em>, and
+        <em class="italic ink-butter"> tools that future-me will thank present-me for</em>.
+      </p>
+      <p class="mt-4 text-base md:text-lg leading-relaxed text-[color:var(--color-ink-soft)]">
+        When I&rsquo;m away from a screen I&rsquo;m usually sketching, reading
+        something old, or chasing a quieter cup of coffee.
+      </p>
+
+      <div class="mt-8">
+        <p class="font-hand text-xl ink-lavender mb-3">things I reach for</p>
+        <LogoCloud />
+      </div>
+    </div>
+  </Section>
+
+  {/* ============================================================
+      TIMELINE — handwritten label on the left, entries on the right.
+     ============================================================ */}
+  <Section id="timeline" label="how I got here" labelAccent="mint">
+    <div class="max-w-2xl">
+      <Timeline entries={timeline} />
+    </div>
+  </Section>
+
+  {/* ============================================================
+      RECENT WORK — handwritten label on the left, compact card grid
+      on the right. No "Browse all" CTA: header nav handles it.
+     ============================================================ */}
+  <Section id="featured" label="recent work" labelAccent="butter">
+    <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 items-start reveal-stagger list-none p-0">
+      {featuredProjects.map((project) => (
+        <li class="self-start"><ProjectCard project={project} size="compact" /></li>
+      ))}
+    </ul>
+  </Section>
+</BaseLayout>

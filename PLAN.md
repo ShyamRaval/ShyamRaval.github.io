@@ -20,10 +20,25 @@ We keep updating it as new requirements arrive — **before** making major imple
 
 - Dark mode / theme toggle.
 - Rendering certificates in the UI (data exists for future use).
-- Dedicated `/about` or `/contact` pages — Home covers "about me", Footer covers contact.
+- Dedicated `/about` or `/contact` pages — Home covers "about me", a dock at the bottom of the viewport covers contact.
 - Project list-only UI (we use cards + case studies).
 - Heavy "desert / sand / beach" visual metaphor — palette is **soft pastels + gradients**, not themed imagery.
 - Sitemap or RSS feed.
+- Copyright notice in the footer — copyright applies automatically; we don't restate it.
+
+---
+
+## Design Philosophy
+
+We design like a small magazine, not a SaaS landing page.
+
+- **Every element earns its place.** Buttons, links, cards, animations, sections — each must answer a clear question. If we cannot articulate why something exists, it is removed.
+- **No template thinking.** Industry-standard portfolio patterns (3-card "values" rows, big "Hire me" CTAs, hero buttons that beg for clicks, generic footers with site maps) are off-limits as defaults; we adopt them only when they serve the specific page.
+- **We do not chase the user.** Primary navigation is provided once, in the Header. Pages do not redirect attention back to those same destinations through hero CTAs. The user comes to us at their pace.
+- **Quiet beats loud.** Color, motion, and weight are spent like punctuation, not wallpaper.
+- **Personal voice.** Display text has personality, body text reads cleanly, and the occasional handwritten note carries a hand-drawn warmth.
+- **Real-life material language.** The site should feel like real-life objects — polaroids, paper notebook tabs, sticky notes, washi tape, ink stamps, pencil scribbles, handwritten margin notes — rather than abstract digital surfaces. We stay inside a coherent world of personal **stationery / studying / journaling** so the metaphors do not fight each other. We break the standard "this is a website" illusion and replace it with a tactile, timeless one.
+- **Timelessness over trend.** Reference materials that have always existed (paper, ink, tape, photographs) and that will still feel right years from now. Avoid effects that will date the site to a specific year.
 
 ---
 
@@ -39,12 +54,16 @@ We keep updating it as new requirements arrive — **before** making major imple
 
 ## UX & Visual Direction
 
-- **Tone**: welcoming, warm, all-out colorful — not corporate or minimal.
-- **Palette**: **soft pastels** across the board (pastel sky, coral, mint, butter, lavender), composed into **playful gradients**. No themed sand/beach/desert imagery.
-- **Base theme**: white-first surfaces with pastel washes and gradient accents. **No dark-mode toggle.**
-- **Gradients vs content images — keep them separate**: gradients are a pure **CSS styling/theming** decision (backgrounds, dividers, card chrome, hero washes). **Content images** (e.g. a profile photo in the About section, project screenshots, blog covers) are independent — they flow through `<Media />` and are not tinted or replaced by gradients. The two concerns never overlap or imitate each other.
-- **Typography**: friendly, readable; generous whitespace.
-- **Motion**: animations are heavy but disciplined — CSS + View Transitions first, JS motion only inside islands when needed. Respects `prefers-reduced-motion`.
+- **Tone**: editorial, personal, quietly colorful — like a well-laid-out small magazine, not a SaaS landing page.
+- **Palette**: **soft pastels** (sky, coral, mint, butter, lavender, rose), used as **accents on white** — never as full-page wallpaper. Gradients live in text and small chrome elements, not large background washes.
+- **Base theme**: white-first with deliberate pastel accents. **No dark-mode toggle.**
+- **Gradients vs content images — keep them separate**: gradients are a pure **CSS styling/theming** decision used sparingly in text and small chrome. **Content images** (e.g. a profile photo, project screenshots, blog covers) are independent — they flow through `<Media />` and are not tinted or replaced by gradients. The two concerns never overlap or imitate each other.
+- **Typography (tri-font system)**:
+  - **Display** — an expressive serif (e.g. *Instrument Serif*) for headings and editorial moments. Italic when emphasizing.
+  - **Body** — a highly readable neutral sans (e.g. *Inter*) for prose and UI.
+  - **Hand** — a handwritten accent (e.g. *Caveat*) used sparingly for annotations, section labels, signatures, and "personal voice" moments. **Locked** — we are not switching the handwritten font.
+- **Material vocabulary (current)**: **polaroid photo frames** (hero portrait), **notebook-style paper tabs** (header navigation), **handwritten margin labels** (section identifiers), small **pastel ink** moments in text. Future additions may include **washi tape**, **ink stamps**, **sticky notes**, **pencil scribbles**, and **torn paper edges** — added only when they earn their place.
+- **Motion**: animations are disciplined — CSS + View Transitions first, JS motion only inside islands when needed. Respects `prefers-reduced-motion`.
 - **Performance**: static-first, optimized images via Astro `<Image />`, fast transitions.
 - **Accessibility**: semantic HTML, strong color contrast on white, keyboard-friendly, reduced-motion support.
 
@@ -62,8 +81,25 @@ We keep updating it as new requirements arrive — **before** making major imple
 | `/resume` | Embedded PDF + download button (certificates **not** rendered) |
 
 - **No dedicated `/about` page** — Home is the about page.
-- **No dedicated `/contact` page** — email + socials live in the Footer only.
+- **No dedicated `/contact` page** — email + socials live in a **floating dock** at the bottom of the viewport (rendered by `Footer.astro`).
 - Internal navigation uses **Astro View Transitions** for instant, no-reload page swaps.
+
+---
+
+## Layout Strategy
+
+- **Compactness as a design discipline.** Screen real estate is precious; we minimize forced scrolling. Sections are tight, dense where they can be, breathable where they must be.
+- **Distinct strategies for mobile vs desktop** — not pure responsive scaling. Desktop leans into **asymmetric, editorial multi-column** compositions (e.g. handwritten section label on one side, content on the other). Mobile collapses to a deliberate single-column reading flow with the labels stacking above content.
+- **Whitespace earns its keep.** Padding and margin exist to aid readability and rhythm, never to pad time on page.
+- **No horizontal-rule section dividers.** Section boundaries are communicated by **handwritten margin labels + whitespace**, not by generic `border-top` lines between adjacent components.
+- **Cards size to their own content.** No card stretches its height to match the tallest sibling in its row; each card's height is determined by its own content. Adjacent cards may therefore differ in height — that is correct, not a bug.
+- **Navigation as paper tabs.** The header renders nav items as **notebook-style paper tabs**: rounded-top rectangles, with the active tab "pulled forward" into the page surface (white fill, no bottom edge). The site name is the home link, treated as the notebook's spine label.
+- **The "footer" is a two-state floating dock** at the bottom of the viewport:
+  1. **Resting**: shows a short textual invitation (e.g. *socials — say hello*) mixing display italic + handwritten Caveat. No icons visible.
+  2. **Active (hover / focus / touch)**: the text crossfades into a row of icons (email + socials).
+  3. **Per-icon reveal**: hovering or focusing an individual icon surfaces a small floating **"business card"** above the dock — handle in display italic, one-line handwritten note. On touch devices, icons render directly (no resting text), and tapping navigates to the link.
+  - Icon hover colors echo each brand's signature color, applied to the icon itself (not as a full background fill).
+  - **Touch targets on mobile are ≥ 44 px** per Apple HIG / Material recommendation — the touch-device dock uses larger icon hit areas and slightly more spacing than the desktop dock.
 
 ---
 
@@ -81,7 +117,7 @@ We keep updating it as new requirements arrive — **before** making major imple
 - Reusable UI blocks in `src/components/` (e.g. `Header.astro`, `Footer.astro`, `ProjectCard.astro`, `BlogCard.astro`, `Timeline.astro`, `Section.astro`, `LogoCloud.astro`, `Media.astro`).
 - `Media.astro` is the **only** image entry point across the site — wraps Astro `<Image />` and hides the provider (see Images & Media).
 - Thin shared helpers live in `src/lib/` (e.g. `src/lib/media.ts` for resolving provider URLs).
-- `Header.astro` consumes `site.nav`. `Footer.astro` renders **only** email + socials (no nav links).
+- `Header.astro` consumes `site.nav`. `Footer.astro` renders as a **floating dock** — icons-only for socials + email, no nav links, no copyright text.
 - Pages in `src/pages/` stay **thin** — compose components, feed data/content.
 
 ### Data (rarely changes)
@@ -173,7 +209,7 @@ src/
     ProjectLayout.astro
   components/
     Header.astro            # consumes site.nav
-    Footer.astro            # email + socials only
+    Footer.astro            # floating icons-only dock (socials + email)
     Section.astro
     ProjectCard.astro
     BlogCard.astro
@@ -362,6 +398,17 @@ Stored only; **not rendered in v1**.
 - **2026-05-26** — Deployment target is GitHub Pages at `https://shyamraval.github.io` with root base path.
 - **2026-05-26** — **Gradients are pure CSS theming**; content images (photos, screenshots, covers) travel through `<Media />` and stay independent of the gradient styling.
 - **2026-05-26** — **No sitemap and no RSS feed in v1.**
+- **2026-05-26** — **Design philosophy: every element earns its place.** Reject default portfolio patterns (3-card "values" rows, hero CTA pairs, generic footers). We do not chase the user.
+- **2026-05-26** — **Tri-font typography system**: *Instrument Serif* (display, expressive), *Inter* (body, highly readable), *Caveat* (handwritten accent, used sparingly).
+- **2026-05-26** — **Compactness is a design discipline.** Distinct mobile vs desktop layouts (not pure responsive scaling) — desktop leans editorial/asymmetric, mobile is a single-column reading flow.
+- **2026-05-26** — **Footer renders as a floating dock** (icons-only socials + email pill at the bottom of the viewport). No nav, no copy, no copyright.
+- **2026-05-26** — **No large background gradient washes** (`.bg-oasis` removed). Gradients live only in text and small chrome.
+- **2026-05-26 (pm)** — **Real-life material language locked in**: polaroids, paper tabs, handwritten margins, future room for washi tape / stamps / sticky notes. Stays inside the personal-stationery world. Timeless over trendy.
+- **2026-05-26 (pm)** — **Handwritten font (Caveat) is locked.** We are not searching for a replacement.
+- **2026-05-26 (pm)** — **No horizontal-rule section dividers.** Removed `border-t` between adjacent sections; whitespace + handwritten margin labels do the separating.
+- **2026-05-26 (pm)** — **Cards size to their own content** in any grid (no row-stretching to match the tallest sibling).
+- **2026-05-26 (pm)** — **Navigation renders as notebook-style paper tabs**; active tab is "pulled forward" into the page surface.
+- **2026-05-26 (pm)** — **Dock is two-state**: resting textual invitation → active row of icons → per-icon floating "business card" tooltip. Icon hover colors echo each brand's signature color. On touch devices the dock skips the resting state and exposes icons directly.
 
 ---
 
