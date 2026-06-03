@@ -1,0 +1,55 @@
+---
+/**
+ * Icon — thin renderer over `src/lib/icons.ts`.
+ *
+ * Adding new icons: edit the `ICONS` registry in that file. This
+ * component never needs to change for new artwork.
+ *
+ * A11y rules:
+ *   - decorative={true}     → aria-hidden, no role          (icon repeats text nearby)
+ *   - title="..."           → role="img" + aria-label       (standalone meaningful icon)
+ *   - neither               → role="img" with no label      (callers should know better)
+ */
+import { ICONS, type IconName } from "../lib/icons";
+
+interface Props {
+  name: IconName;
+  /** Plain string fallback — used only by the "monogram" entry. */
+  text?: string;
+  /** Forwarded to the rendered <svg> / <span>. Tailwind utilities welcome. */
+  class?: string;
+  /** Optional override for the title used by assistive tech. */
+  title?: string;
+  /** Hide from accessibility tree when the parent already provides a label. */
+  decorative?: boolean;
+}
+
+const { name, text, class: className, title, decorative = false } = Astro.props;
+const shape = ICONS[name];
+
+const a11y = decorative
+  ? { "aria-hidden": "true" as const }
+  : title
+    ? { role: "img", "aria-label": title }
+    : { role: "img" };
+---
+{shape.style === "text" ? (
+  <span class:list={[className]} {...a11y}>{text ?? ""}</span>
+) : shape.style === "stroke" ? (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.7"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class:list={[className]}
+    {...a11y}
+  >
+    {shape.paths!.map((d) => <path d={d} />)}
+  </svg>
+) : (
+  <svg viewBox="0 0 24 24" fill="currentColor" class:list={[className]} {...a11y}>
+    {shape.paths!.map((d) => <path d={d} />)}
+  </svg>
+)}

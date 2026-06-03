@@ -1,11 +1,31 @@
 /**
  * Site-wide data that rarely changes.
- * Per PLAN.md: nav is Header-only; socials + email are Footer-only.
+ *
+ * Per PLAN.md (2026-05-27): primary navigation now lives in the bottom
+ * dock (NOT the header). Each nav entry carries:
+ *   - label  : display name
+ *   - href   : target route
+ *   - icon   : icon key the Dock component knows how to render
+ *              ("monogram" → "S" in display italic; otherwise an SVG)
+ *   - hand   : one-line handwritten note shown in the per-icon
+ *              business card tooltip above the dock
+ *   - handle : pretty label shown above `hand` in the business card
  */
+
+import type { IconName } from "../lib/icons";
+
+/* Only the icon names that make sense for navigation rows. The
+ * `Extract` keeps this in lockstep with the icon registry — adding a
+ * new nav-eligible icon is a one-line union widening, not a new
+ * standalone literal. */
+export type NavIcon = Extract<IconName, "monogram" | "folder" | "pencil" | "document">;
 
 export interface NavLink {
   label: string;
   href: string;
+  icon: NavIcon;
+  handle: string;
+  hand: string;
 }
 
 export interface SocialLink {
@@ -16,6 +36,7 @@ export interface SocialLink {
 export interface SiteData {
   name: string;
   shortName: string;
+  monogram: string;
   tagline: string;
   bio: string;
   url: string;
@@ -35,31 +56,57 @@ export interface SiteData {
 }
 
 export const site: SiteData = {
-  name: "Raval Dinesh",
-  shortName: "Dinesh",
+  name: "Shyam Raval",
+  shortName: "Shyam",
+  monogram: "S",
   tagline: "An oasis of code, craft, and curiosity.",
   bio: "I build calm, colorful interfaces and the systems behind them. Currently exploring delightful UX, design systems, and Astro-powered sites that load fast and feel friendly.",
   url: "https://shyamraval.github.io",
   email: "hello@shyamraval.dev",
   nav: [
-    { label: "projects", href: "/projects" },
-    { label: "blog", href: "/blog" },
-    { label: "resume", href: "/resume" },
+    {
+      label: "home",
+      href: "/",
+      icon: "monogram",
+      handle: "Shyam Raval",
+      hand: "back to the start",
+    },
+    {
+      label: "projects",
+      href: "/projects",
+      icon: "folder",
+      handle: "the work",
+      hand: "things I've built",
+    },
+    {
+      label: "blog",
+      href: "/blog",
+      icon: "pencil",
+      handle: "the writing",
+      hand: "what I've been thinking",
+    },
+    {
+      label: "resume",
+      href: "/resume",
+      icon: "document",
+      handle: "the resume",
+      hand: "the formal version",
+    },
   ],
   socials: [
     { label: "GitHub", href: "https://github.com/ShyamRaval" },
-    { label: "LinkedIn", href: "https://www.linkedin.com/in/dkraval/" },
+    { label: "LinkedIn", href: "https://www.linkedin.com/in/shyamraval/" },
     { label: "X / Twitter", href: "https://x.com/" },
   ],
   seo: {
-    titleTemplate: "%s — Raval Dinesh",
-    defaultTitle: "Raval Dinesh — Portfolio",
+    titleTemplate: "%s — Shyam Raval",
+    defaultTitle: "Shyam Raval — Portfolio",
     defaultDescription:
-      "Personal portfolio of Raval Dinesh — projects, writing, and experiments.",
+      "Personal portfolio of Shyam Raval — projects, writing, and experiments.",
     ogImage: "/og-default.png",
   },
   resume: {
     pdfPath: "/resume.pdf",
-    downloadName: "DineshRaval-Resume.pdf",
+    downloadName: "ShyamRaval-Resume.pdf",
   },
 };

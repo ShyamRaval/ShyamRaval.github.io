@@ -6,10 +6,12 @@
  * on desktop and stacks above content on mobile (see .row-editorial in global.css).
  * No "eyebrow / title / intro" trio — pages compose their own headings inline.
  */
+import { type Accent, inkClass } from "../lib/accents";
+
 interface Props {
   id?: string;
   label?: string;
-  labelAccent?: "coral" | "sky" | "mint" | "butter" | "lavender" | "rose";
+  labelAccent?: Accent;
   size?: "default" | "lg";
   class?: string;
 }
@@ -22,14 +24,13 @@ const {
   class: className = "",
 } = Astro.props;
 
-const accentClass = `ink-${labelAccent}`;
 const sizeClass = size === "lg" ? "section-lg" : "section";
 ---
 <section id={id} class:list={[sizeClass, className]}>
   <div class="container-page">
     {label ? (
       <div class="row-editorial">
-        <p class:list={["font-hand text-2xl md:text-3xl md:sticky md:top-24 md:self-start", accentClass]}>
+        <p class:list={["font-hand text-2xl md:text-3xl md:sticky md:top-24 md:self-start", inkClass(labelAccent)]}>
           {label}
         </p>
         <div>

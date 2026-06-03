@@ -2,7 +2,7 @@
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import Header from "../components/Header.astro";
-import Footer from "../components/Footer.astro";
+import Dock from "../components/Dock.astro";
 import { site } from "../data/site";
 
 interface Props {
@@ -24,7 +24,6 @@ const resolvedTitle = title
   : site.seo.defaultTitle;
 
 const canonical = new URL(Astro.url.pathname, site.url).toString();
-const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
 ---
 <html lang="en">
   <head>
@@ -68,12 +67,12 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
       Skip to content
     </a>
 
-    <Header currentPath={currentPath} />
+    <Header />
 
     <main id="main" transition:animate="fade">
       <slot />
     </main>
 
-    <Footer />
+    <Dock />
   </body>
 </html>

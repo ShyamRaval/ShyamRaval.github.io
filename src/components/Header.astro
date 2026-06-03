@@ -1,66 +1,45 @@
 ---
 /**
- * Header — notebook-style paper tabs.
+ * Header — a thin strip carrying a single handwritten "marginalia" line.
  *
- * The site name on the left acts as the notebook's spine label and links Home.
- * Nav items render as paper tabs along the right: rounded-top rectangles that
- * sit on the header's bottom edge. The active tab is "pulled forward" into
- * the page surface (white fill, bottom border = white = continuous with page).
+ * Per PLAN.md (2026-05-27): no name, no logo, no nav. Just one short line
+ * picked at random from `src/data/marginalia.ts`.
  *
- * The whole header is sticky, but kept thin to preserve compactness.
+ * Rolling policy:
+ *   - Every page load (refresh) re-rolls.
+ *   - In-app navigation keeps the current line because the header is persisted.
+ *   - No sessionStorage / no per-session pinning — that was the previous
+ *     bug, which made each device feel like it "owned" one statement.
+ *
+ * This is a static site, so Astro cannot produce new server HTML on each
+ * GitHub Pages refresh. The inline script writes the line while the browser is
+ * still parsing this paragraph, avoiding a visible render-then-replace step.
  */
-import { site } from "../data/site";
-
-interface Props {
-  currentPath?: string;
-}
-
-const { currentPath = "/" } = Astro.props;
-
-const normalize = (p: string) => (p === "/" ? "/" : p.replace(/\/$/, ""));
-const here = normalize(currentPath);
-
-const isActive = (href: string) => {
-  if (href === "/") return here === "/";
-  return here === href || here.startsWith(`${href}/`);
-};
+import { marginalia } from "../data/marginalia";
 ---
 <header
-  class="sticky top-0 z-30 bg-white/90 backdrop-blur-sm"
+  class="container-page py-3 md:py-4 text-center"
   transition:persist
-  transition:name="site-header"
+  transition:name="page-marginalia"
 >
-  <div class="container-page flex items-end justify-between gap-4 pt-3">
-    {/* Spine label / home link */}
-    <a
-      href="/"
-      class="font-display italic text-xl md:text-2xl pb-2.5 self-end text-[color:var(--color-ink)] hover:text-[color:var(--color-pastel-coral-deep)] transition-colors"
-      aria-label={`${site.name} — home`}
-    >
-      <span class="hidden sm:inline">{site.name}</span>
-      <span class="sm:hidden">{site.shortName}</span>
-    </a>
+  <p
+    id="page-marginalia"
+    class="font-hand text-base md:text-lg text-[color:var(--color-ink-soft)] m-0 leading-snug"
+    aria-live="off"
+  >
+    <script is:inline define:vars={{ lines: marginalia }}>
+      (function () {
+        var line = lines[Math.floor(Math.random() * lines.length)];
+        var escaped = String(line)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
 
-    {/* Paper tabs — sit on top of the header bottom edge */}
-    <nav aria-label="Primary" class="self-end">
-      <ul class="flex items-end gap-1 -mb-px">
-        {site.nav.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <li>
-              <a
-                href={item.href}
-                class:list={["tab", active && "is-active"]}
-                aria-current={active ? "page" : undefined}
-              >
-                {item.label}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  </div>
-
-  <div class="h-px bg-[color:var(--color-edge)]" aria-hidden="true"></div>
+        document.write("&mdash; " + escaped + " &mdash;");
+      })();
+    </script>
+    <noscript>&mdash; {marginalia[0]} &mdash;</noscript>
+  </p>
 </header>

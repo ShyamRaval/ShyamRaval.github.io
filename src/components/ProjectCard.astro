@@ -1,7 +1,6 @@
 ---
 import Media from "./Media.astro";
-
-type Accent = "coral" | "sky" | "mint" | "butter" | "lavender" | "rose";
+import { type Accent, chipClass } from "../lib/accents";
 
 interface Project {
   slug: string;
@@ -53,7 +52,7 @@ const accent: Accent = project.accent ?? "coral";
       {project.tags?.length ? (
         <ul class="mt-3 flex flex-wrap gap-1.5">
           {project.tags.map((tag) => (
-            <li class={`chip chip-${accent}`}>{tag}</li>
+            <li class:list={["chip", chipClass(accent)]}>{tag}</li>
           ))}
         </ul>
       ) : null}

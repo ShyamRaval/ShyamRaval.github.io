@@ -1,5 +1,6 @@
 ---
 import type { TimelineEntry, TimelineKind } from "../data/timeline";
+import { type Accent, accentVar } from "../lib/accents";
 
 interface Props {
   entries: TimelineEntry[];
@@ -7,12 +8,14 @@ interface Props {
 
 const { entries } = Astro.props;
 
-const kindAccent: Record<TimelineKind, string> = {
-  milestone: "var(--color-pastel-coral-deep)",
-  work:      "var(--color-pastel-sky-deep)",
-  education: "var(--color-pastel-lavender-deep)",
-  project:   "var(--color-pastel-mint-deep)",
-  life:      "var(--color-pastel-butter-deep)",
+/* Each timeline kind borrows one of the site's pastel accents.
+ * Centralised so a new kind = one entry here, no per-component CSS. */
+const kindAccent: Record<TimelineKind, Accent> = {
+  milestone: "coral",
+  work:      "sky",
+  education: "lavender",
+  project:   "mint",
+  life:      "butter",
 };
 ---
 <ol class="reveal-stagger">
@@ -24,7 +27,7 @@ const kindAccent: Record<TimelineKind, string> = {
         <div class="relative flex flex-col items-center pt-1">
           <span
             class="font-hand text-xl leading-none"
-            style={`color: ${accent};`}
+            style={`color: ${accentVar(accent)};`}
             aria-hidden="true"
           >
             {entry.year}

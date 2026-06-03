@@ -89,15 +89,21 @@
     color: var(--color-ink);
   }
 
-  body {
+body {
     background-color: var(--color-surface);
     color: var(--color-ink);
     font-family: var(--font-sans);
     min-height: 100svh;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* Leave room for the floating dock so content never gets covered */
-    padding-bottom: 6.5rem;
+    /* The Pocket Player lives in the bottom-left corner on desktop
+     * and bottom-centre on mobile; either way it's only as wide as
+     * the device itself, so we don't reserve a full-width strip.
+     * A small breathing margin keeps content from kissing the edge. */
+    padding-bottom: 1.5rem;
+  }
+  @media (hover: none) and (pointer: coarse) {
+    body { padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)); }
   }
 
   h1, h2, h3, h4 {
@@ -292,268 +298,629 @@
   }
 
   /* ============================================================
-   * Two-state dock — floating pill at the bottom of the viewport.
+   * Pocket Player — the only navigation surface on the site.
    *
-   * Resting:  textual invitation ("socials — say hello") at compact size.
-   * Expanded: row of brand-tinted icons in a much wider pill.
+   * One device, two ergonomic positions:
+   *   - Desktop:  tucked into the bottom-LEFT corner (out of the way
+   *               of centred long-form content). Hover/focus pulls
+   *               it out of the "pocket" into full reach.
+   *   - Mobile:   monogram puck pinned to bottom-CENTRE. Tap raises
+   *               the device with a dim backdrop behind it.
    *
-   * The expanded state is triggered by ANY of:
-   *   - desktop:  :hover or :focus-within on the dock shell
-   *   - touch:    `.is-dragging` class (added by the touch-drag handler
-   *               in Footer.astro on touchstart on an icon)
-   *
-   * Size transitions deliberately run slower (~380ms) than the
-   * crossfades so the grow feels like a real movement, not a snap.
+   * Performance contract during gesture:
+   *   Only TWO elements transform per frame —
+   *     1. `.dock-player-wheel-arc`     (transform: rotate)
+   *     2. `.dock-player-screen-list`   (transform: translateY)
+   *   Items themselves carry no per-item transforms / shadows /
+   *   gradients that change during gesture. Heavy decorative effects
+   *   (the wheel's inner ring) are dropped under `.is-dragging`.
    * ============================================================ */
 
-  /* === Base dock shell — compact resting state === */
+  /* === Shell — invisible positioning context. Holds the puck, the
+   * dim backdrop (mobile only), and the player stage. Position is
+   * viewport-aware: bottom-left on desktop, bottom-centre on mobile.
+   *
+   * `pointer-events: none` on the shell + `auto` on each child means
+   * the shell carries no hit area of its own — only the visible
+   * puck (when closed) and the visible device (when open) are
+   * interactive. No invisible dead zone in the corner that blocks
+   * clicks behind it. */
   .dock-shell {
     position: fixed;
-    left: 50%;
-    bottom: 1.1rem;
-    transform: translateX(-50%);
+    left: 1rem;
+    bottom: 1rem;
     z-index: 40;
-    display: grid;
-    grid-template-areas: "stack";
-    align-items: center;
-    justify-items: center;
-    padding: 0.4rem 1rem;
-    min-height: 2.5rem;
-    background-color: rgba(255, 255, 255, 0.86);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--color-edge);
-    border-radius: var(--radius-pill);
-    box-shadow: var(--shadow-dock);
-    transition:
-      padding 380ms var(--motion-ease-out),
-      min-width 380ms var(--motion-ease-out),
-      min-height 380ms var(--motion-ease-out),
-      background-color 280ms var(--motion-ease-out);
-  }
-
-  .dock-resting,
-  .dock-icons {
-    grid-area: stack;
-    display: inline-flex;
-    align-items: center;
-    white-space: nowrap;
-  }
-  .dock-resting {
-    gap: 0.3rem;
-    opacity: 1;
-    transform: translateY(0);
-    color: var(--color-ink);
-    transition:
-      opacity 260ms var(--motion-ease-out),
-      transform 320ms var(--motion-ease-out);
-  }
-  .dock-icons {
-    gap: 0.15rem;
-    opacity: 0;
-    transform: translateY(4px);
     pointer-events: none;
-    transition:
-      opacity 260ms var(--motion-ease-out),
-      transform 320ms var(--motion-ease-out),
-      width 380ms var(--motion-ease-out),
-      gap 380ms var(--motion-ease-out);
+
+    /* LCD palette — scoped to the dock so both the device's main
+     * screen and the puck's tiny screen share it. Vintage handheld
+     * tone (Game Boy / Tamagotchi / iPod-mono): warm green-grey
+     * gradient, dark olive ink. The LCD's job is to read as a
+     * digital display, not as paper. */
+    --lcd-bg-top: #d2dac0;
+    --lcd-bg-bottom: #b3bc94;
+    --lcd-ink: #1c2511;
+    --lcd-ink-muted: #4f5836;
+    --lcd-ink-faint: #7c876a;
+    --lcd-border: #6f7848;
+    --lcd-pixel: rgba(20, 30, 18, 0.08);
+    --lcd-highlight-top: rgba(255, 244, 200, 0.55);
+    --lcd-highlight-bottom: rgba(255, 248, 220, 0.30);
+    --lcd-highlight-border: rgba(111, 120, 72, 0.7);
+  }
+  .dock-shell > * {
+    pointer-events: auto;
   }
 
-  .dock-icon {
+  /* === Resting puck — colourful mini iPod ===
+   * The puck attracts attention through *colour* + a subtle resting
+   * wiggle, not through copy. The body carries a warm pastel
+   * gradient (coral → lavender) with a soft coloured halo behind
+   * it; the wiggle runs at rest, pauses on hover. Opening the dock
+   * scales this same silhouette up into the full Pocket Player. */
+  .dock-puck {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 3;
+    width: 3.4rem;
+    height: 4.6rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      opacity 220ms var(--motion-ease-out),
+      transform 320ms var(--motion-ease-spring);
+  }
+  .dock-puck:focus-visible {
+    outline: 2px solid var(--color-pastel-lavender-deep);
+    outline-offset: 4px;
+    border-radius: 0.7rem;
+  }
+
+  /* The iPod body — sized + tilted; the wiggle animation lives here
+   * (not on the button itself) so focus outlines stay still. */
+  .dock-puck-body {
+    position: absolute;
+    inset: 0;
+    border-radius: 0.7rem;
+    background: linear-gradient(
+      155deg,
+      var(--color-pastel-coral) 0%,
+      var(--color-pastel-butter) 45%,
+      var(--color-pastel-lavender) 100%
+    );
+    border: 1px solid color-mix(in oklab, var(--color-pastel-coral-deep) 40%, transparent);
+    /* The big shadow stack does two jobs: a soft coloured halo so
+     * the puck visibly "glows" against any page background, and the
+     * usual cream highlight/lowlight rim to keep the silhouette
+     * legible. */
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      inset 0 -1px 0 rgba(20, 18, 30, 0.06),
+      0 10px 24px color-mix(in oklab, var(--color-pastel-coral-deep) 35%, transparent),
+      0 4px 10px rgba(20, 18, 30, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.45rem 0.55rem;
+    transform-origin: 50% 100%;
+    /* Wiggle only when the puck is visible (dock closed). When the
+     * player is open the puck is hidden — no point animating it. */
+    animation: puck-wiggle 3.2s var(--motion-ease-out) infinite;
+  }
+  .dock-shell[data-state="open"] .dock-puck-body {
+    animation: none;
+  }
+  .dock-puck:hover .dock-puck-body,
+  .dock-puck:focus-visible .dock-puck-body {
+    animation-play-state: paused;
+    transform: rotate(-2deg) translateY(-3px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      inset 0 -1px 0 rgba(20, 18, 30, 0.06),
+      0 14px 30px color-mix(in oklab, var(--color-pastel-coral-deep) 45%, transparent),
+      0 6px 14px rgba(20, 18, 30, 0.14);
+  }
+  /* Subtle resting wiggle — only ±1.5° so it reads as "alive, not
+   * shaking". transform-origin: bottom so it pivots from where it
+   * sits on the desk. */
+  @keyframes puck-wiggle {
+    0%, 100% { transform: rotate(-5deg);   }
+    50%      { transform: rotate(-3.5deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dock-puck-body { animation: none; transform: rotate(-4deg); }
+  }
+
+  /* Tiny LCD screen on the puck body — same vintage green-grey as
+   * the device's main screen, so the puck literally previews what
+   * the open device looks like. */
+  .dock-puck-screen {
+    width: 100%;
+    height: 1rem;
+    border-radius: 0.25rem;
+    background:
+      radial-gradient(circle, var(--lcd-pixel) 0.5px, transparent 1px) 0 0 / 2.5px 2.5px,
+      linear-gradient(180deg, var(--lcd-bg-top) 0%, var(--lcd-bg-bottom) 100%);
+    border: 1px solid var(--lcd-border);
+    box-shadow: inset 0 1px 2px rgba(20, 30, 18, 0.18);
+    flex-shrink: 0;
+  }
+
+  /* Tiny click-wheel on the puck body. */
+  .dock-puck-wheel {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: radial-gradient(circle at 50% 38%, #fdfcf6 0%, #e8e4d8 70%, #d4d0c4 100%);
+    border: 1px solid color-mix(in oklab, var(--color-ink) 22%, transparent);
+    box-shadow:
+      inset 0 1px 2px rgba(255, 255, 255, 0.85),
+      0 2px 5px rgba(20, 18, 30, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .dock-puck-monogram {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 0.85rem;
+    line-height: 1;
+    color: var(--color-ink);
+    transform: translateY(-0.04em);
+  }
+
+  /* === Backdrop — mobile only. Hidden via display:none on desktop. === */
+  .dock-player-backdrop {
+    display: none;
+  }
+
+  /* === Player stage — outer mount that translates in/out ===
+   * On desktop, anchored above the puck (bottom-left). The stage
+   * starts "tucked" — translated DOWN past the viewport edge so only
+   * a hint of the device peeks out. Hover/focus on the shell pulls
+   * it up into reach. On mobile, anchored bottom-centre with a
+   * different tuck transform. */
+  .dock-player-stage {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(8%);
+    transition:
+      opacity 220ms var(--motion-ease-out),
+      transform 380ms var(--motion-ease-spring);
+  }
+  /* Open — `data-state` is the single source of truth, set by the
+   * controller (touch tap, desktop hover-with-grace, focus-within,
+   * keyboard activation). CSS reacts only to that flag. */
+  .dock-shell[data-state="open"] .dock-player-stage {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .dock-shell[data-state="open"] .dock-puck {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20%) scale(0.85);
+  }
+
+  /* === Device shell ===
+   * Cream paper-plastic body. Slight tilt so it reads as "set down
+   * on the desk" rather than "rendered into a frame". */
+  .dock-player {
+    width: 17.5rem;
+    background: linear-gradient(180deg, #fbfaf6 0%, #f0ede3 100%);
+    border: 1px solid var(--color-edge-strong);
+    border-radius: 1.4rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(20, 18, 30, 0.05),
+      0 16px 36px rgba(20, 18, 30, 0.18);
+    padding: 0.9rem 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    transform: rotate(-0.4deg);
+  }
+
+  /* === The screen — vintage LCD ===
+   * A real digital display sitting in the cream device body. Warm
+   * green-grey backlit gradient with a subtle pixel-grid pattern
+   * (the dot raster is part of the screen's background, so it
+   * shows everywhere — including faintly through the highlight
+   * band — but never on top of the icons themselves). Recessed
+   * with an inner shadow + olive bezel border, lifted by a single
+   * pixel of cream rim above so the body reads as cream paper and
+   * the screen reads as glass. */
+  .dock-player-screen {
     position: relative;
+    background:
+      radial-gradient(circle, var(--lcd-pixel) 0.6px, transparent 1.1px) 0 0 / 3px 3px,
+      linear-gradient(180deg, var(--lcd-bg-top) 0%, var(--lcd-bg-bottom) 100%);
+    border: 1px solid var(--lcd-border);
+    border-radius: 0.75rem;
+    box-shadow:
+      inset 0 2px 5px rgba(20, 30, 18, 0.22),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.22),
+      0 1px 0 rgba(255, 255, 255, 0.6);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .dock-player-screen-frame {
+    position: relative;
+    height: 4.2rem;
+    overflow: hidden;
+  }
+
+  /* Highlight band — vertical, fixed at the centre of the frame.
+   * Rows slide underneath it as the wheel spins (Etch-A-Sketch
+   * pointer model — only with the pointer fixed, and the world
+   * moving past). */
+  /* Highlight band — a faint warm-tinted rectangle inside the LCD
+   * (the "lit" pixel cluster under the cursor), olive dashed bezel
+   * so it visually belongs to the LCD palette. */
+  .dock-player-screen-highlight {
+    position: absolute;
+    top: 0.4rem;
+    bottom: 0.4rem;
+    left: 50%;
+    width: 3.6rem;
+    transform: translateX(-50%);
+    border-radius: 0.55rem;
+    background: linear-gradient(
+      180deg,
+      var(--lcd-highlight-top) 0%,
+      var(--lcd-highlight-bottom) 100%
+    );
+    border: 1px dashed var(--lcd-highlight-border);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .dock-player-screen-list {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+    transform: translateX(var(--dock-list-x, 0px));
+  }
+  /* Promote to its own layer only while the list is moving — permanent
+   * will-change on a fixed element costs GPU memory and compositor
+   * work on every page frame even when the dock is closed. */
+  .dock-player-screen-list.is-dragging,
+  .dock-player-screen-list.is-snapping {
+    will-change: transform;
+  }
+  .dock-player-screen-list.is-snapping {
+    transition: transform 380ms var(--motion-ease-spring);
+  }
+  .dock-player-screen-list.is-dragging {
+    transition: none;
+  }
+
+  /* Section dividers — short handwritten captions between the nav
+   * and socials groups, set in the LCD's faint ink. Flows as plain
+   * horizontal text so it reads from the front (the previous
+   * vertical-rl + rotate version forced a head-tilt). The dashed
+   * olive borders still do the visual work of separating groups. */
+  .dock-player-section {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.75rem;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--lcd-ink-faint);
+    letter-spacing: 0.01em;
+    border-left: 1px dashed var(--lcd-border);
+    border-right: 1px dashed var(--lcd-border);
+    margin: 0 0.3rem;
+  }
+
+  /* Row cells — every cell rendered in LCD ink so they read as
+   * pixels on a screen, not pastel chrome. Brand colours are
+   * deliberately NOT applied here — the LCD enforces its own
+   * monochrome scheme (faithful to vintage handheld devices, and
+   * resolves the "interactive vs information element" ambiguity
+   * the user reported). */
+  .dock-player-row {
+    flex-shrink: 0;
+    width: 3.6rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lcd-ink-muted);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color 200ms var(--motion-ease-out),
+      transform 280ms var(--motion-ease-spring),
+      opacity 200ms var(--motion-ease-out);
+  }
+  .dock-player-row-icon {
+    width: 1.6rem;
+    height: 1.6rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 2rem;
-    width: 2rem;
-    border-radius: var(--radius-pill);
-    color: var(--color-ink-soft);
-    /* Touch-drag interactions own their own gesture; prevent the browser
-     * from hijacking with scroll/zoom while the finger is on an icon. */
-    touch-action: none;
-    transition:
-      height 380ms var(--motion-ease-out),
-      width 380ms var(--motion-ease-out),
-      color var(--motion-duration-fast) var(--motion-ease-out),
-      background-color var(--motion-duration-fast) var(--motion-ease-out),
-      transform var(--motion-duration-fast) var(--motion-ease-out);
+    flex-shrink: 0;
+    transition: transform 280ms var(--motion-ease-spring);
   }
-  .dock-icon:hover,
-  .dock-icon:focus-visible,
-  .dock-icon.is-active {
-    background-color: var(--color-surface-muted);
-    transform: translateY(-1px);
+  .dock-player-row-icon svg {
+    width: 100%;
+    height: 100%;
   }
-  .dock-icon svg {
-    width: 1.05rem;
-    height: 1.05rem;
-    transition:
-      width 380ms var(--motion-ease-out),
-      height 380ms var(--motion-ease-out);
-  }
-
-  /* === Expanded state — desktop hover/focus OR touch press-and-hold ===
-   * The dock grows because the ICONS grow, not because empty space is
-   * inserted between them. Gap stays modest so the user can slide / aim
-   * without crossing meaningless whitespace. The shell sizes itself to
-   * whatever the bigger icons + modest gap occupy.
-   */
-  .dock-shell:hover,
-  .dock-shell:focus-within,
-  .dock-shell.is-dragging {
-    padding: 0.7rem 0.9rem;
-    background-color: rgba(255, 255, 255, 0.95);
-  }
-  .dock-shell:hover .dock-resting,
-  .dock-shell:focus-within .dock-resting,
-  .dock-shell.is-dragging .dock-resting {
-    opacity: 0;
-    transform: translateY(-4px);
-    pointer-events: none;
-  }
-  .dock-shell:hover .dock-icons,
-  .dock-shell:focus-within .dock-icons,
-  .dock-shell.is-dragging .dock-icons {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-    gap: 0.45rem;
-  }
-  .dock-shell:hover .dock-icon,
-  .dock-shell:focus-within .dock-icon,
-  .dock-shell.is-dragging .dock-icon {
-    height: 3.75rem;
-    width: 3.75rem;
-  }
-  .dock-shell:hover .dock-icon svg,
-  .dock-shell:focus-within .dock-icon svg,
-  .dock-shell.is-dragging .dock-icon svg {
-    width: 1.7rem;
-    height: 1.7rem;
-  }
-
-  /* Touch devices: skip the resting state entirely; icons are visible
-   * from the start at a finger-friendly size (Apple HIG min 44px /
-   * Material 48dp). The press-and-hold expanded state then goes one
-   * tier larger again for the easier slide-target. */
-  @media (hover: none) and (pointer: coarse) {
-    .dock-shell {
-      bottom: 1.4rem;
-      padding: 0.6rem 0.7rem;
-      min-height: 4rem;
-    }
-    .dock-resting { opacity: 0; pointer-events: none; }
-    .dock-icons {
-      opacity: 1;
-      pointer-events: auto;
-      transform: none;
-      gap: 0.5rem;
-    }
-    .dock-icon {
-      height: 3rem;
-      width: 3rem;
-    }
-    .dock-icon svg {
-      width: 1.35rem;
-      height: 1.35rem;
-    }
-
-    /* Mobile press-and-hold goes one tier larger than the desktop grow.
-     * Same principle — bigger icons, modest gap, no fake whitespace. */
-    .dock-shell.is-dragging {
-      padding: 0.85rem 1rem;
-    }
-    .dock-shell.is-dragging .dock-icons {
-      gap: 0.55rem;
-    }
-    .dock-shell.is-dragging .dock-icon {
-      height: 4.25rem;
-      width: 4.25rem;
-    }
-    .dock-shell.is-dragging .dock-icon svg {
-      width: 2rem;
-      height: 2rem;
-    }
-    .dock-shell.is-dragging .dock-card {
-      bottom: calc(100% + 18px);
-    }
-
-    /* Snappier card transition for drag handoff between icons */
-    .dock-card {
-      transition:
-        opacity 130ms var(--motion-ease-out),
-        transform 180ms var(--motion-ease-spring);
-      bottom: calc(100% + 14px);
-    }
-  }
-
-  /* Brand-tinted hover colors per icon (apply also when touch-dragging) */
-  .dock-icon[data-brand="email"]:hover,
-  .dock-icon[data-brand="email"]:focus-visible,
-  .dock-icon[data-brand="email"].is-active    { color: var(--color-pastel-coral-deep); }
-  .dock-icon[data-brand="github"]:hover,
-  .dock-icon[data-brand="github"]:focus-visible,
-  .dock-icon[data-brand="github"].is-active   { color: #181717; }
-  .dock-icon[data-brand="linkedin"]:hover,
-  .dock-icon[data-brand="linkedin"]:focus-visible,
-  .dock-icon[data-brand="linkedin"].is-active { color: #0a66c2; }
-  .dock-icon[data-brand="x"]:hover,
-  .dock-icon[data-brand="x"]:focus-visible,
-  .dock-icon[data-brand="x"].is-active        { color: #000; }
-
-  /* Floating "business card" above the dock — appears on icon hover/focus */
-  .dock-card {
-    position: absolute;
-    bottom: calc(100% + 12px);
-    left: 50%;
-    transform: translate(-50%, 6px) rotate(-1.2deg);
-    display: inline-flex;
-    flex-direction: column;
-    gap: 0.05rem;
-    padding: 0.45rem 0.7rem;
-    background-color: #fff;
-    border: 1px solid var(--color-edge);
-    border-radius: 0.55rem;
-    box-shadow: var(--shadow-soft);
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition:
-      opacity var(--motion-duration-fast) var(--motion-ease-out),
-      transform var(--motion-duration-base) var(--motion-ease-spring);
-    z-index: 1;
-  }
-  .dock-card::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translate(-50%, -3px) rotate(45deg);
-    width: 8px;
-    height: 8px;
-    background-color: #fff;
-    border-right: 1px solid var(--color-edge);
-    border-bottom: 1px solid var(--color-edge);
-  }
-  .dock-card-handle {
+  .dock-player-row-monogram {
     font-family: var(--font-display);
     font-style: italic;
-    font-size: 0.92rem;
-    color: var(--color-ink);
-    line-height: 1.1;
+    font-weight: 500;
+    font-size: 1.5rem;
+    line-height: 1;
+    transform: translateY(-0.04em);
   }
-  .dock-card-note {
+  .dock-player-row:focus-visible {
+    outline: 2px solid var(--color-pastel-lavender-deep);
+    outline-offset: -3px;
+    border-radius: 0.45rem;
+  }
+
+  /* Active cell — full LCD ink + scale-up. Differentiation is via
+   * scale + ink contrast, not colour. */
+  .dock-player-row.is-active { color: var(--lcd-ink); }
+  .dock-player-row.is-active .dock-player-row-icon {
+    transform: scale(1.18);
+  }
+
+  /* Screen meta — sits inside the LCD bezel, dashed olive divider
+   * marks it off as a separate "field" of the screen. */
+  .dock-player-screen-meta {
+    border-top: 1px dashed var(--lcd-border);
+    padding: 0.45rem 0.85rem 0.55rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    background: rgba(20, 30, 18, 0.06);
+  }
+  .dock-player-screen-handle {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--lcd-ink);
+  }
+  .dock-player-screen-note {
     font-family: var(--font-hand);
     font-size: 1rem;
-    color: var(--color-ink-muted);
     line-height: 1.1;
+    color: var(--lcd-ink-muted);
+    text-align: center;
   }
-  .dock-icon:hover .dock-card,
-  .dock-icon:focus-visible .dock-card,
-  .dock-icon.is-active .dock-card {
-    opacity: 1;
-    transform: translate(-50%, 0) rotate(-1.2deg);
+
+  /* === The wheel ===
+   * Pure controller — carries no items. The arc is the only thing
+   * that rotates. Compass labels are real `<button>`s with actions
+   * (menu = close, ◂◂ = prev, ▸▸ = next, play = activate). The wheel
+   * is intentionally large — it's the device's physical control. */
+  .dock-player-wheel-mount {
+    display: flex;
+    justify-content: center;
+    padding: 0.2rem 0 0;
+  }
+  .dock-player-wheel {
+    --wheel-size: 12.4rem;
+    position: relative;
+    width: var(--wheel-size);
+    height: var(--wheel-size);
+    border-radius: 999px;
+    background: radial-gradient(circle at 50% 38%, #fdfcf6 0%, #ece9df 70%, #d8d4c6 100%);
+    border: 1px solid var(--color-edge-strong);
+    box-shadow:
+      inset 0 2px 4px rgba(255, 255, 255, 0.75),
+      inset 0 -2px 6px rgba(20, 18, 30, 0.07),
+      0 6px 14px rgba(20, 18, 30, 0.08);
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    cursor: grab;
+  }
+  .dock-player-wheel.is-dragging { cursor: grabbing; }
+  .dock-player-wheel::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(var(--wheel-size) - 1.2rem);
+    height: calc(var(--wheel-size) - 1.2rem);
+    transform: translate(-50%, -50%);
+    border-radius: 999px;
+    border: 1px dashed rgba(20, 18, 30, 0.08);
+    pointer-events: none;
+  }
+  .dock-player-wheel.is-dragging::before { display: none; }
+
+  /* Arc — the only rotating layer. Tick marks etched around the rim. */
+  .dock-player-wheel-arc {
+    position: absolute;
+    inset: 0.45rem;
+    border-radius: 999px;
+    pointer-events: none;
+    transform: rotate(var(--dock-wheel-rot, 0deg));
+    background:
+      conic-gradient(
+        from 0deg,
+        rgba(20, 18, 30, 0.09) 0 4deg, transparent 4deg 36deg,
+        rgba(20, 18, 30, 0.09) 36deg 40deg, transparent 40deg 72deg,
+        rgba(20, 18, 30, 0.09) 72deg 76deg, transparent 76deg 108deg,
+        rgba(20, 18, 30, 0.09) 108deg 112deg, transparent 112deg 144deg,
+        rgba(20, 18, 30, 0.09) 144deg 148deg, transparent 148deg 180deg,
+        rgba(20, 18, 30, 0.09) 180deg 184deg, transparent 184deg 216deg,
+        rgba(20, 18, 30, 0.09) 216deg 220deg, transparent 220deg 252deg,
+        rgba(20, 18, 30, 0.09) 252deg 256deg, transparent 256deg 288deg,
+        rgba(20, 18, 30, 0.09) 288deg 292deg, transparent 292deg 324deg,
+        rgba(20, 18, 30, 0.09) 324deg 328deg, transparent 328deg 360deg
+      );
+    mask: radial-gradient(circle at 50% 50%, transparent 0 60%, #000 62%, #000 100%);
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0 60%, #000 62%, #000 100%);
+  }
+  .dock-player-wheel.is-dragging .dock-player-wheel-arc {
+    will-change: transform;
+  }
+
+  /* Compass cap buttons — `menu` / forward / `play` / back.
+   * `touch-action: none` matches the wheel surface itself so a
+   * touch that starts on a cap can be promoted to a wheel rotation
+   * without the browser hijacking it as a button-press / scroll. */
+  .dock-player-wheel-cap {
+    position: absolute;
+    z-index: 3;
+    padding: 0.3rem 0.55rem;
+    background: transparent;
+    border: 0;
+    font-size: 0.66rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    font-family: var(--font-sans);
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 0.4rem;
+    transition: color 180ms var(--motion-ease-out);
+  }
+  .dock-player-wheel-cap:hover,
+  .dock-player-wheel-cap:focus-visible {
+    color: var(--color-ink);
+  }
+  .dock-player-wheel-cap:focus-visible {
+    outline: 1.5px solid var(--color-pastel-lavender-deep);
+    outline-offset: 2px;
+  }
+  .dock-player-wheel-cap[data-pos="up"]    { top: 0.35rem;     left: 50%;       transform: translateX(-50%); }
+  .dock-player-wheel-cap[data-pos="down"]  { bottom: 0.35rem;  left: 50%;       transform: translateX(-50%); }
+  .dock-player-wheel-cap[data-pos="left"]  { left: 0.55rem;    top: 50%;        transform: translateY(-50%); }
+  .dock-player-wheel-cap[data-pos="right"] { right: 0.55rem;   top: 50%;        transform: translateY(-50%); }
+
+  /* Icon caps (prev / next) — square padding + a fixed-size SVG
+   * so the transport glyphs sit neatly against the wheel rim and
+   * mirror each other exactly. Distinct class (not just :has(svg))
+   * for older browser support and IDE-greppable styling. */
+  .dock-player-wheel-cap--icon {
+    padding: 0.4rem;
+    line-height: 0;
+  }
+  .dock-player-wheel-cap--icon svg {
+    width: 0.85rem;
+    height: 0.85rem;
+    display: block;
+  }
+
+  /* Centre button — confirm the highlighted item.
+   * `touch-action: none` lets a touch that starts here flow into
+   * the wheel's rotation gesture once it crosses the drag
+   * threshold (see Dock.astro `onPointerMove`). Without it, mobile
+   * browsers can swallow the pointermove stream as a button press. */
+  .dock-player-wheel-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4rem;
+    height: 4rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #fff 0%, #ebe7db 100%);
+    border: 1px solid var(--color-edge-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow:
+      inset 0 1px 2px rgba(255, 255, 255, 0.95),
+      0 2px 6px rgba(20, 18, 30, 0.1);
+    z-index: 4;
+    transition: transform 200ms var(--motion-ease-spring);
+  }
+  .dock-player-wheel-center:active {
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  .dock-player-wheel-center:focus-visible {
+    outline: 2px solid var(--color-pastel-lavender-deep);
+    outline-offset: 2px;
+  }
+
+  /* ============================================================
+   * Mobile overrides — touch + coarse pointer.
+   * Only positioning + backdrop differ. The device body is shared.
+   * ============================================================ */
+  @media (hover: none) and (pointer: coarse) {
+    .dock-shell {
+      left: 50%;
+      bottom: env(safe-area-inset-bottom, 0px);
+      transform: translateX(-50%);
+    }
+    /* Re-anchor children for centre alignment. */
+    .dock-puck {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+    }
+    .dock-shell[data-state="open"] .dock-puck {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(20%) scale(0.85);
+    }
+    .dock-player-stage {
+      position: fixed;
+      left: 50%;
+      bottom: calc(0.9rem + env(safe-area-inset-bottom, 0px));
+      transform: translate(-50%, 14%);
+    }
+    .dock-shell[data-state="open"] .dock-player-stage {
+      transform: translate(-50%, 0);
+    }
+    .dock-player {
+      width: clamp(15rem, 90vw, 18rem);
+    }
+
+    /* Backdrop — only shown on mobile, behind the device. */
+    .dock-player-backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      border: none;
+      padding: 0;
+      background: rgba(20, 18, 30, 0.34);
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 240ms var(--motion-ease-out);
+    }
+    .dock-shell[data-state="open"] .dock-player-backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 }
 

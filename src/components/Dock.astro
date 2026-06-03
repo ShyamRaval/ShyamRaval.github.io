@@ -1,0 +1,877 @@
+---
+/**
+ * Dock — the *Pocket Player*. The single most important interactive
+ * element on the site, and the only primary navigation surface on
+ * any device.
+ *
+ * One device, two ergonomic positions:
+ *
+ *   Desktop (hover + fine pointer):
+ *     Tucked into the bottom-LEFT corner like an iPod sleeping in
+ *     a jeans pocket — only the top of the device peeks above the
+ *     viewport edge when at rest. Hover or focus the corner and the
+ *     device "pulls out" of the pocket into full reach. Stays out of
+ *     the way of long-form content (which lives centred in the page).
+ *
+ *   Mobile (touch + coarse pointer):
+ *     A small monogram puck pinned to bottom-CENTRE. Tap → the
+ *     device rises with a dim backdrop behind it.
+ *
+ *   Both shapes share the SAME body:
+ *
+ *       ┌──────────────────────┐
+ *       │ ┌──────────────────┐ │
+ *       │ │  ▸ home          │ │
+ *       │ │    projects      │ │  ← screen — items slide PAST a
+ *       │ │  ▰▰▰▰▰▰▰▰▰▰▰▰▰▰  │ │    fixed centre highlight band
+ *       │ │    blog          │ │    (the Etch-A-Sketch pointer)
+ *       │ │    resume        │ │
+ *       │ ├──────────────────┤ │
+ *       │ │ handle  · ~~note │ │
+ *       │ └──────────────────┘ │
+ *       │       ╭ menu ╮       │  cap → close
+ *       │       │ ◂ ● ▸│       │  cap-left → previous,
+ *       │       ╰ play ╯       │  cap-right → next,
+ *       └──────────────────────┘   cap-bottom + centre → activate
+ *
+ * Performance contract during gesture:
+ *   Only TWO elements transform per frame —
+ *     1. `.dock-player-wheel-arc`     (transform: rotate)
+ *     2. `.dock-player-screen-list`   (transform: translateY)
+ *   Items themselves carry no per-item transforms / shadows /
+ *   gradients that change while the pointer is moving. All updates
+ *   are RAF-batched. The wheel rotation is UNBOUNDED so it visibly
+ *   keeps spinning even after the list reaches its end (rubber-band).
+ *
+ * Future hooks (intentionally not implemented here, just designed-for):
+ *   - The `data-action` attributes on the wheel caps are already a
+ *     dispatcher pattern — adding music transport (play/pause/next
+ *     track) later means adding action handlers, not new markup.
+ *   - The controller exposes a `dispatchEvent("dock:active", …)`
+ *     pattern that future audio islands can subscribe to for
+ *     small UX sounds (a tick on detent crossing, a soft chime on
+ *     centre-button press) without touching this file again.
+ */
+import { site } from "../data/site";
+import { getDockSocials } from "../lib/dock-data";
+import Icon from "./Icon.astro";
+
+const socials = getDockSocials(site);
+
+const firstNav = site.nav[0];
+const seedHandle = firstNav?.handle ?? "";
+const seedNote = firstNav?.hand ?? "";
+---
+<aside
+  class="dock-shell"
+  data-state="closed"
+  transition:persist
+  transition:name="primary-dock"
+  aria-label="Site navigation and contact"
+>
+  {/* Puck — a colourful mini iPod silhouette. The body carries a
+      warm pastel gradient (coral → lavender) and a soft coloured
+      glow so it pops against the page on its own; an idle wiggle
+      keeps it lightly alive. No copy attached — the device's
+      colour and shape do the asking. */}
+  <button
+    type="button"
+    class="dock-puck"
+    aria-controls="dock-player-stage"
+    aria-expanded="false"
+    aria-label="Open menu"
+  >
+    <span class="dock-puck-body" aria-hidden="true">
+      <span class="dock-puck-screen"></span>
+      <span class="dock-puck-wheel">
+        <Icon name="monogram" text={site.monogram} class="dock-puck-monogram" decorative />
+      </span>
+    </span>
+  </button>
+
+  {/* Backdrop — also touch-only. Desktop closes the device by leaving
+      the corner, so it doesn't need a dimming layer over the page. */}
+  <button
+    type="button"
+    class="dock-player-backdrop"
+    aria-label="Close menu"
+    tabindex="-1"
+  ></button>
+
+  <div
+    id="dock-player-stage"
+    class="dock-player-stage"
+    role="dialog"
+    aria-labelledby="dock-player-title"
+    aria-hidden="true"
+    inert
+  >
+    <h2 id="dock-player-title" class="sr-only">Site menu</h2>
+
+    <div class="dock-player">
+      {/* === Screen — items slide past a fixed highlight band === */}
+      <div class="dock-player-screen">
+        <div class="dock-player-screen-frame">
+          <span class="dock-player-screen-highlight" aria-hidden="true"></span>
+
+          <div class="dock-player-screen-list" role="menu">
+            <span
+              class="dock-player-section font-hand"
+              aria-hidden="true"
+              data-section="nav"
+            >
+              wander
+            </span>
+            {site.nav.map((item, i) => (
+              <a
+                class="dock-player-row"
+                href={item.href}
+                data-brand={item.label}
+                data-index={i}
+                data-handle={item.handle}
+                data-note={item.hand}
+                role="menuitem"
+                aria-label={`${item.handle} — ${item.hand}`}
+              >
+                <span class="dock-player-row-icon" aria-hidden="true">
+                  <Icon
+                    name={item.icon}
+                    text={site.monogram}
+                    class={item.icon === "monogram" ? "dock-player-row-monogram" : undefined}
+                    decorative
+                  />
+                </span>
+              </a>
+            ))}
+
+            <span
+              class="dock-player-section font-hand"
+              aria-hidden="true"
+              data-section="socials"
+            >
+              say hello
+            </span>
+            {socials.map((entry, i) => (
+              <a
+                class="dock-player-row"
+                href={entry.href}
+                data-brand={entry.brand}
+                data-index={site.nav.length + i}
+                data-handle={entry.handle}
+                data-note={entry.hand}
+                role="menuitem"
+                target={entry.external ? "_blank" : undefined}
+                rel={entry.external ? "noreferrer noopener" : undefined}
+                aria-label={`${entry.label} — ${entry.handle}`}
+              >
+                <span class="dock-player-row-icon" aria-hidden="true">
+                  <Icon name={entry.icon} decorative />
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Screen meta — the active item's NAME (italic display) and a
+            handwritten one-liner. The name appears here ONCE — the row
+            cells in the strip above show only icons, so there's no
+            duplicate text. */}
+        <div class="dock-player-screen-meta" aria-live="polite">
+          <span class="dock-player-screen-handle">{seedHandle}</span>
+          <span class="dock-player-screen-note font-hand">{seedNote}</span>
+        </div>
+      </div>
+
+      {/* === Wheel — pure controller. Caps are real buttons with
+          honest actions. The arc is the only thing that rotates. */}
+      <div class="dock-player-wheel-mount">
+        <div class="dock-player-wheel">
+          <span class="dock-player-wheel-arc" aria-hidden="true"></span>
+
+          <button type="button" class="dock-player-wheel-cap" data-pos="up" data-action="menu" aria-label="Close menu">menu</button>
+          {/* Skip-forward / skip-back — same transport-control vocabulary
+              as every iPod / Walkman / early MP3 player. The Icon
+              component owns the SVG so adding new caps in future is a
+              one-line change here, not a new inline SVG. */}
+          <button type="button" class="dock-player-wheel-cap dock-player-wheel-cap--icon" data-pos="right" data-action="next" aria-label="Next item">
+            <Icon name="skip-forward" decorative />
+          </button>
+          <button type="button" class="dock-player-wheel-cap" data-pos="down" data-action="play" aria-label="Open the highlighted item">play</button>
+          <button type="button" class="dock-player-wheel-cap dock-player-wheel-cap--icon" data-pos="left" data-action="prev" aria-label="Previous item">
+            <Icon name="skip-back" decorative />
+          </button>
+
+          {/* Centre button — intentionally empty. Cream gradient +
+              inset highlight + slight ring shadow already say "press
+              me"; no glyph or monogram needed. The original iPod's
+              centre button is also blank, and removing the "S" gets
+              the chrome out of the brand-identity business and back
+              into the "this is the confirm key" business. */}
+          <button
+            type="button"
+            class="dock-player-wheel-center"
+            data-action="play"
+            aria-label="Open the highlighted item"
+          ></button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</aside>
+
+<script>
+  /**
+   * Pocket Player controller. See the component doc-comment for the
+   * full design rationale; this comment focuses on the gesture model
+   * because it is where most of the bugs were.
+   *
+   * Gesture model — TWO independent accumulators:
+   *
+   *   `wheelRotation` (unbounded) — drives the arc transform.
+   *     Keeps spinning visually for as long as the user keeps
+   *     dragging, even after the list has hit its end. This is what
+   *     gives the wheel the feeling of a real, freely-spinning
+   *     control.
+   *
+   *   `listRotation` (hard-clamped at [-buffer, max+buffer]) — drives
+   *     the items list `translateY`. Because it's clamped, it cannot
+   *     accumulate over-rotation. So the moment the user reverses
+   *     direction at the end of the list, `listRotation` immediately
+   *     leaves the boundary — the list responds on the very first
+   *     reverse-direction frame, instead of needing to "wind back"
+   *     however much over-rotation the wheel had collected.
+   *
+   *   Each `pointermove` adds the same `delta` to BOTH accumulators;
+   *   only `listRotation` gets the clamp. Per-move angle deltas are
+   *   computed incrementally (against the previous pointer angle),
+   *   not against the drag-start angle, so the wheel can be spun
+   *   continuously through any number of full rotations without ever
+   *   hitting the ±180° wraparound.
+   *
+   * Inputs supported on the wheel:
+   *   - Touch:           PointerEvents (pointerType="touch")
+   *   - Mouse drag:      PointerEvents (pointerType="mouse")
+   *   - Mouse wheel:     `wheel` event over the wheel surface
+   *   - Touchpad scroll: same `wheel` event — BOTH axes contribute,
+   *                      so a two-finger horizontal swipe (left / right)
+   *                      drives the wheel just like a vertical scroll.
+   *   - Keyboard:        ◂◂ / play / ▸▸ / menu cap buttons + Escape
+   *
+   * Closing the player:
+   *   - Desktop: cursor leaves the device (CSS handles this).
+   *   - Mobile:  tap the dim backdrop, OR tap anywhere on the page
+   *              outside the device (document-level click-outside
+   *              safety net), OR press Escape, OR press the wheel's
+   *              `menu` cap.
+   */
+  const TOUCH_DRAG_THRESHOLD = 4;
+  const WHEEL_DEG_PER_STEP = 36;                     // detent every 36° on the arc
+  const WHEEL_SCROLL_GAIN = 0.5;                     // mouse-wheel sensitivity
+  const RUBBER_BUFFER_DEG = WHEEL_DEG_PER_STEP * 0.45; // soft over-pull on list, in degrees
+
+  /* ---------- shared helpers (DRY) ---------- */
+
+  /**
+   * Listener-group binder. We used to declare each listener twice
+   * (bind / unbind) — adding a new event meant editing two functions.
+   * Now we declare each binding once and ask the group to attach or
+   * detach itself.
+   */
+  type Binding = {
+    target: EventTarget;
+    type: string;
+    handler: EventListenerOrEventListenerObject;
+    options?: boolean | AddEventListenerOptions;
+  };
+  const listenerGroup = (bindings: Binding[]) => {
+    let bound = false;
+    return {
+      bind() {
+        if (bound) return;
+        bound = true;
+        for (const b of bindings) b.target.addEventListener(b.type, b.handler, b.options);
+      },
+      unbind() {
+        if (!bound) return;
+        bound = false;
+        for (const b of bindings) b.target.removeEventListener(b.type, b.handler, b.options as boolean | EventListenerOptions);
+      },
+      get isBound() { return bound; },
+    };
+  };
+
+  /**
+   * Bounce keyframes. Both axes (list translateX, arc rotate) follow
+   * the same shape — push toward the boundary, then spring back. Only
+   * the transform function and units change. One factory now.
+   */
+  const bounceKeyframes = (prop: "translateX" | "rotate", magnitude: number, unit: "px" | "deg"): Keyframe[] => [
+    { transform: `${prop}(0${unit})`, offset: 0 },
+    { transform: `${prop}(${magnitude}${unit})`, offset: 0.30, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
+    { transform: `${prop}(0${unit})`, offset: 1, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)" },
+  ];
+
+  const initDock = () => {
+    const shell = document.querySelector<HTMLElement>(".dock-shell");
+    if (!shell) return;
+    if (shell.dataset.dockPlayerInit === "1") return;
+    shell.dataset.dockPlayerInit = "1";
+
+    const puck = shell.querySelector<HTMLButtonElement>(".dock-puck");
+    const stage = shell.querySelector<HTMLElement>(".dock-player-stage");
+    const backdrop = shell.querySelector<HTMLButtonElement>(".dock-player-backdrop");
+    const wheel = shell.querySelector<HTMLElement>(".dock-player-wheel");
+    const wheelArc = shell.querySelector<HTMLElement>(".dock-player-wheel-arc");
+    const list = shell.querySelector<HTMLElement>(".dock-player-screen-list");
+    const frame = shell.querySelector<HTMLElement>(".dock-player-screen-frame");
+    const screenHandle = shell.querySelector<HTMLElement>(".dock-player-screen-handle");
+    const screenNote = shell.querySelector<HTMLElement>(".dock-player-screen-note");
+    if (
+      !puck || !stage || !backdrop || !wheel || !wheelArc ||
+      !list || !frame || !screenHandle || !screenNote
+    ) return;
+
+    const rows = Array.from(
+      list.querySelectorAll<HTMLAnchorElement>(".dock-player-row")
+    );
+    const N = rows.length;
+    if (N === 0) return;
+
+    /** Detect whether THIS device is a touch surface. We don't trust
+     *  pointerType per-event for layout decisions like backdrop +
+     *  scroll-lock — we want a stable per-session answer. */
+    const isTouchDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+
+    let isOpen = false;
+    let wheelRotation = 0;   // unbounded — drives the arc only
+    let listRotation = 0;    // clamped — drives the items list
+    let activeIndex = 0;     // clamped to [0, N-1]
+    let rowCenters: number[] = [];
+    let frameCenter = 0;
+
+    const minListRot = -RUBBER_BUFFER_DEG;
+    const maxListRot = (N - 1) * WHEEL_DEG_PER_STEP + RUBBER_BUFFER_DEG;
+
+    /* In the horizontal layout the items list flows left→right; rows
+     * are flex-children with fixed widths and the section labels sit
+     * between them as narrow vertical dividers. We measure each row's
+     * horizontal centre relative to the list's coordinate space. */
+    let rowCentersReady = false;
+
+    const measure = () => {
+      rowCenters = rows.map((row) => row.offsetLeft + row.offsetWidth / 2);
+      frameCenter = frame.clientWidth / 2;
+      rowCentersReady = true;
+    };
+
+    /** Wheel centre in viewport coords — cached so pointermove never
+     *  calls getBoundingClientRect (which forces layout every frame). */
+    let wheelCx = 0;
+    let wheelCy = 0;
+    const refreshWheelCenter = () => {
+      const r = wheel.getBoundingClientRect();
+      wheelCx = r.left + r.width / 2;
+      wheelCy = r.top + r.height / 2;
+    };
+
+    const clampListRotation = (deg: number) =>
+      Math.max(minListRot, Math.min(maxListRot, deg));
+
+    /* ---------- RAF-batched render ---------- */
+
+    let pendingWheelRotation = 0;
+    let pendingListRotation = 0;
+    let rafQueued = false;
+    let lastPaintedListX = NaN;
+    let lastPaintedWheelRot = NaN;
+
+    const paintTransforms = (listX: number, wheelRot: number) => {
+      if (wheelRot !== lastPaintedWheelRot) {
+        shell.style.setProperty("--dock-wheel-rot", `${wheelRot}deg`);
+        lastPaintedWheelRot = wheelRot;
+      }
+      if (listX !== lastPaintedListX) {
+        shell.style.setProperty("--dock-list-x", `${listX}px`);
+        lastPaintedListX = listX;
+      }
+    };
+
+    const render = () => {
+      rafQueued = false;
+      wheelRotation = pendingWheelRotation;
+      listRotation = pendingListRotation;
+
+      if (!rowCentersReady) return;
+
+      let listX = 0;
+      if (rowCenters.length > 0) {
+        const continuous = listRotation / WHEEL_DEG_PER_STEP;
+        const i0 = Math.max(0, Math.min(N - 1, Math.floor(continuous)));
+        const i1 = Math.max(0, Math.min(N - 1, i0 + 1));
+        const t = Math.max(0, Math.min(1, continuous - i0));
+        const center = rowCenters[i0]! + (rowCenters[i1]! - rowCenters[i0]!) * t;
+        listX = frameCenter - center;
+
+        const nearest = Math.round(Math.max(0, Math.min(N - 1, continuous)));
+        if (nearest !== activeIndex) {
+          rows[activeIndex]?.classList.remove("is-active");
+          activeIndex = nearest;
+          rows[activeIndex]?.classList.add("is-active");
+          writeMeta();
+        }
+      }
+
+      paintTransforms(listX, wheelRotation);
+    };
+
+    /** Apply a delta to both accumulators; listRotation is clamped. */
+    const applyDelta = (delta: number) => {
+      pendingWheelRotation = wheelRotation + delta;
+      pendingListRotation = clampListRotation(listRotation + delta);
+      if (!rafQueued) {
+        rafQueued = true;
+        requestAnimationFrame(render);
+      }
+    };
+
+    /** Snap both accumulators to a specific detent (used on release). */
+    const snapToDetent = (index: number) => {
+      const snapped = index * WHEEL_DEG_PER_STEP;
+      pendingWheelRotation = snapped;
+      pendingListRotation = snapped;
+      if (!rafQueued) {
+        rafQueued = true;
+        requestAnimationFrame(render);
+      }
+    };
+
+    /** Updates the screen's name + handwritten note for the active
+     *  row. Called only at detent crossings (naturally rate-limited
+     *  to one cheap textContent write per real row), so DOM text
+     *  mutation never competes with the gesture's frame budget. */
+    const writeMeta = () => {
+      const row = rows[activeIndex];
+      if (!row) return;
+      const handle = row.dataset.handle ?? "";
+      const note = row.dataset.note ?? "";
+      if (screenHandle.textContent !== handle) screenHandle.textContent = handle;
+      if (screenNote.textContent !== note) screenNote.textContent = note;
+    };
+
+    /* ---------- open / close ---------- */
+
+    const lockScroll = (lock: boolean) => {
+      if (!isTouchDevice) return; // desktop never scroll-locks
+      const html = document.documentElement;
+      const body = document.body;
+      if (lock) {
+        html.style.overflow = "hidden";
+        body.style.overflow = "hidden";
+      } else {
+        html.style.overflow = "";
+        body.style.overflow = "";
+      }
+    };
+
+    /**
+     * Reset gesture-related inline state to a clean slate. Called
+     * before every fresh open so any leftover `is-dragging` flags,
+     * stale inline transforms, or transitions:none from a previous
+     * drag don't carry into the new session. This is what fixes the
+     * "broken on reopen after navigation" symptom — without it, a
+     * persisted dock can inherit a translateX from a half-completed
+     * drag on the previous page. */
+    const resetGestureState = () => {
+      list.classList.remove("is-dragging");
+      list.classList.remove("is-snapping");
+      wheel.classList.remove("is-dragging");
+      wheelArc.style.transition = "none";
+      wheelRotation = 0;
+      listRotation = 0;
+      pendingWheelRotation = 0;
+      pendingListRotation = 0;
+      lastPaintedListX = NaN;
+      lastPaintedWheelRot = NaN;
+      paintTransforms(0, 0);
+    };
+
+    /* ---------- open-only listeners (bound while player is open) ---------- */
+
+    let resizeRaf = 0;
+    let scrollSnapTimer = 0;
+
+    const onWheelScroll = (e: WheelEvent) => {
+      if (!isOpen) return;
+      if (e.ctrlKey) return;
+      e.preventDefault();
+      list.classList.remove("is-snapping");
+      list.classList.add("is-dragging");
+      wheelArc.style.transition = "none";
+      const axisDelta = e.deltaX + e.deltaY;
+      applyDelta(axisDelta * WHEEL_SCROLL_GAIN);
+      window.clearTimeout(scrollSnapTimer);
+      scrollSnapTimer = window.setTimeout(() => {
+        list.classList.remove("is-dragging");
+        list.classList.add("is-snapping");
+        wheelArc.style.transition = "transform 320ms var(--motion-ease-spring)";
+        const continuous = listRotation / WHEEL_DEG_PER_STEP;
+        const nearest = Math.round(Math.max(0, Math.min(N - 1, continuous)));
+        snapToDetent(nearest);
+      }, 140);
+    };
+
+    const onDocKeydown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key === "Escape") { setOpen(false); return; }
+      if (!stage.contains(document.activeElement) && !shell.contains(document.activeElement)) return;
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") { e.preventDefault(); stepBy(+1); }
+      else if (e.key === "ArrowUp" || e.key === "ArrowLeft") { e.preventDefault(); stepBy(-1); }
+      else if (e.key === "Enter" || e.key === " ") {
+        const t = e.target as HTMLElement;
+        if (t.matches(".dock-player-wheel, .dock-player-wheel-arc")) {
+          e.preventDefault();
+          activateCurrent();
+        }
+      }
+    };
+
+    const onTapOutside = (e: PointerEvent) => {
+      if (!isOpen) return;
+      const t = e.target as Node;
+      if (stage.contains(t) || puck.contains(t)) return;
+      setOpen(false);
+    };
+
+    const onScrollWhileOpen = () => {
+      if (isOpen) refreshWheelCenter();
+    };
+
+    // Drag-only listeners — attached the moment a pointer touches the
+    // wheel and detached on pointerup / pointercancel. Each handler is
+    // declared once; the group keeps bind/unbind in lockstep.
+    const wheelMove = listenerGroup([
+      { target: wheel, type: "pointermove",   handler: (e) => onPointerMove(e as PointerEvent) },
+      { target: wheel, type: "pointerup",     handler: () => endDrag() },
+      { target: wheel, type: "pointercancel", handler: () => endDrag() },
+    ]);
+
+    // Open-only listeners — bound when the player opens and released
+    // when it closes. Touch-device-only listeners (the page-level
+    // tap-outside safety net) are conditionally included so closed
+    // desktops never carry a global pointerdown.
+    const openListenerBindings: Binding[] = [
+      { target: wheel,    type: "pointerdown", handler: (e) => onPointerDown(e as PointerEvent) },
+      { target: wheel,    type: "wheel",       handler: (e) => onWheelScroll(e as WheelEvent), options: { passive: false } },
+      { target: document, type: "keydown",     handler: (e) => onDocKeydown(e as KeyboardEvent) },
+      { target: window,   type: "scroll",      handler: () => onScrollWhileOpen(), options: { passive: true } },
+    ];
+    if (isTouchDevice) {
+      openListenerBindings.push({
+        target: document,
+        type: "pointerdown",
+        handler: (e) => onTapOutside(e as PointerEvent),
+        options: { capture: true },
+      });
+    }
+    const openListeners = listenerGroup(openListenerBindings);
+
+    const bindOpenListeners = () => openListeners.bind();
+    const unbindOpenListeners = () => {
+      openListeners.unbind();
+      wheelMove.unbind();
+      window.clearTimeout(scrollSnapTimer);
+    };
+    const bindWheelMove = () => wheelMove.bind();
+    const unbindWheelMove = () => wheelMove.unbind();
+
+    const setOpen = (next: boolean) => {
+      if (next === isOpen) return;
+      isOpen = next;
+      shell.dataset.state = next ? "open" : "closed";
+      puck.setAttribute("aria-expanded", String(next));
+      stage.setAttribute("aria-hidden", String(!next));
+      stage.setAttribute("aria-modal", String(next && isTouchDevice));
+      if (next) {
+        stage.removeAttribute("inert");
+        lockScroll(true);
+        bindOpenListeners();
+        resetGestureState();
+        rows.forEach((r) => r.classList.remove("is-active"));
+        activeIndex = 0;
+        rows[0]?.classList.add("is-active");
+        writeMeta();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            measure();
+            refreshWheelCenter();
+            list.classList.add("is-snapping");
+            wheelArc.style.transition = "transform 380ms var(--motion-ease-spring)";
+            snapToDetent(0);
+          });
+        });
+      } else {
+        unbindOpenListeners();
+        if (activePointerId !== null) {
+          try { wheel.releasePointerCapture(activePointerId); } catch {}
+          activePointerId = null;
+          dragMoved = false;
+        }
+        stage.setAttribute("inert", "");
+        lockScroll(false);
+        if (document.activeElement && stage.contains(document.activeElement)) {
+          (puck as HTMLElement).focus({ preventScroll: true });
+        }
+      }
+    };
+
+    /* ResizeObserver — coalesced to one measure per frame. Only
+     * re-snaps while open; when closed we skip layout reads entirely. */
+    if ("ResizeObserver" in window) {
+      const ro = new ResizeObserver(() => {
+        if (resizeRaf) return;
+        resizeRaf = requestAnimationFrame(() => {
+          resizeRaf = 0;
+          if (!isOpen) return;
+          measure();
+          refreshWheelCenter();
+          snapToDetent(activeIndex);
+        });
+      });
+      ro.observe(frame);
+    }
+
+    /* ---------- pointer-driven wheel rotation (mouse + touch) ---------- */
+
+    let activePointerId: number | null = null;
+    let lastAngle = 0;
+    let dragStartFinger = { x: 0, y: 0 };
+    let dragMoved = false;
+    let suppressNextClick = false;
+
+    const angleFromCenter = (x: number, y: number) =>
+      (Math.atan2(y - wheelCy, x - wheelCx) * 180) / Math.PI;
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (!isOpen) return;
+      refreshWheelCenter();
+      bindWheelMove();
+      activePointerId = e.pointerId;
+      lastAngle = angleFromCenter(e.clientX, e.clientY);
+      dragStartFinger = { x: e.clientX, y: e.clientY };
+      dragMoved = false;
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (e.pointerId !== activePointerId) return;
+      const dx = e.clientX - dragStartFinger.x;
+      const dy = e.clientY - dragStartFinger.y;
+      if (!dragMoved) {
+        if (Math.hypot(dx, dy) <= TOUCH_DRAG_THRESHOLD) return;
+        // Threshold crossed — promote this pointer stream to a drag.
+        // Capture the pointer so the gesture survives the cursor
+        // leaving the cap / centre / wheel rim, and flip the
+        // styling flags off the snap-back transition.
+        dragMoved = true;
+        list.classList.remove("is-snapping");
+        list.classList.add("is-dragging");
+        wheel.classList.add("is-dragging");
+        wheelArc.style.transition = "none";
+        // Re-anchor the angle baseline at the moment we start
+        // tracking rotation, so the first delta represents finger
+        // travel since the threshold crossing — not since
+        // pointerdown. Without this, the first applied delta would
+        // include the (small but real) movement the user made
+        // *before* we decided this was a drag, and the wheel would
+        // jump.
+        lastAngle = angleFromCenter(e.clientX, e.clientY);
+        try { wheel.setPointerCapture(e.pointerId); } catch {}
+        return;
+      }
+      // Direct mapping of *incremental* angle, not absolute. This is
+      // the bug-fix for the previous build's 180° flip-to-origin.
+      const newAngle = angleFromCenter(e.clientX, e.clientY);
+      let delta = newAngle - lastAngle;
+      while (delta > 180) delta -= 360;
+      while (delta < -180) delta += 360;
+      lastAngle = newAngle;
+
+      applyDelta(delta);
+      e.preventDefault();
+    };
+
+    const endDrag = () => {
+      if (activePointerId === null) return;
+      try { wheel.releasePointerCapture(activePointerId); } catch {}
+      activePointerId = null;
+      unbindWheelMove();
+      list.classList.remove("is-dragging");
+      wheel.classList.remove("is-dragging");
+      if (!dragMoved) return;
+
+      list.classList.add("is-snapping");
+      wheelArc.style.transition = "transform 320ms var(--motion-ease-spring)";
+
+      const continuous = listRotation / WHEEL_DEG_PER_STEP;
+      const nearest = Math.round(Math.max(0, Math.min(N - 1, continuous)));
+      snapToDetent(nearest);
+
+      suppressNextClick = true;
+      window.setTimeout(() => { suppressNextClick = false; }, 220);
+    };
+
+    /* ---------- compass cap actions ---------- */
+
+    /**
+     * Boundary "tug" feedback for discrete presses.
+     *
+     * When the user is already at the first or last item and asks
+     * for one more in that direction (cap press or keyboard arrow),
+     * the list shifts a few pixels toward the limit and springs
+     * back. The wheel arc tugs in the matching direction. Together
+     * they read as "I tried, you've hit the end."
+     *
+     * The animation is played with the Web Animations API and
+     * `composite: "add"`, so it composes on top of the controller's
+     * inline transform instead of overriding it — no need to teach
+     * the render loop about a separate bounce offset, and no
+     * fighting between the snap CSS transition and the bounce.
+     *
+     * One bounce at a time: rapid repeat-presses are absorbed
+     * silently rather than stacking into a slow visible wobble.
+     */
+    let isBouncing = false;
+    const bounceAtBoundary = (side: "start" | "end") => {
+      if (isBouncing) return;
+      isBouncing = true;
+      const sign = side === "end" ? 1 : -1;
+      // List shoves in the direction the user pushed; arc tugs the
+      // matching way. Both shapes come from the same factory — only
+      // axis, magnitude, and unit differ.
+      const opts: KeyframeAnimationOptions = { duration: 360, composite: "add" };
+      const listAnim = list.animate(bounceKeyframes("translateX", -12 * sign, "px"), opts);
+      wheelArc.animate(bounceKeyframes("rotate", 10 * sign, "deg"), opts);
+      const release = () => { isBouncing = false; };
+      listAnim.addEventListener("finish", release, { once: true });
+      listAnim.addEventListener("cancel", release, { once: true });
+    };
+
+    const stepBy = (delta: number) => {
+      const wanted = activeIndex + delta;
+      const target = Math.max(0, Math.min(N - 1, wanted));
+      // Boundary press — wanted moved past the edge but target was
+      // clamped back to where we already are. Bounce instead of
+      // snapping (snapping to the same detent would write the same
+      // transform and visibly do nothing).
+      if (target === activeIndex && wanted !== activeIndex) {
+        bounceAtBoundary(delta > 0 ? "end" : "start");
+        return;
+      }
+      list.classList.add("is-snapping");
+      wheelArc.style.transition = "transform 280ms var(--motion-ease-spring)";
+      snapToDetent(target);
+    };
+
+    const activateCurrent = () => {
+      const row = rows[activeIndex];
+      if (row) row.click();
+    };
+
+    const dispatchAction = (action: string) => {
+      switch (action) {
+        case "menu":  setOpen(false); break;
+        case "prev":  stepBy(-1);     break;
+        case "next":  stepBy(+1);     break;
+        case "play":  activateCurrent(); break;
+      }
+    };
+
+    shell.addEventListener("click", (e) => {
+      const trigger = (e.target as HTMLElement).closest<HTMLElement>("[data-action]");
+      if (!trigger || !shell.contains(trigger)) return;
+      // Suppress phantom clicks fired immediately after a drag.
+      if (suppressNextClick) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      const action = trigger.dataset.action;
+      if (!action) return;
+      e.preventDefault();
+      dispatchAction(action);
+    });
+
+    /* ---------- desktop hover-to-open / mobile tap-to-open ---------- */
+
+    if (isTouchDevice) {
+      puck.addEventListener("click", () => setOpen(!isOpen));
+      backdrop.addEventListener("click", () => setOpen(false));
+    } else {
+      // Desktop: hovering the visible peek (the puck) "pulls the
+      // device out of the pocket". Leaving the open device tucks it
+      // back. We listen on the puck for entry and on the stage for
+      // exit, with a small grace window so the cursor's path from
+      // puck → device doesn't accidentally close-then-reopen.
+      let leaveTimer = 0;
+      const cancelLeave = () => window.clearTimeout(leaveTimer);
+      const openNow = () => {
+        cancelLeave();
+        if (!isOpen) setOpen(true);
+      };
+      const closeAfterGrace = () => {
+        cancelLeave();
+        leaveTimer = window.setTimeout(() => {
+          // Bail if the user has come back over the device or focused
+          // a child since the timer was scheduled.
+          if (
+            puck.matches(":hover") ||
+            stage.matches(":hover") ||
+            shell.matches(":focus-within")
+          ) return;
+          setOpen(false);
+        }, 260);
+      };
+      puck.addEventListener("pointerenter", openNow);
+      stage.addEventListener("pointerenter", cancelLeave);
+      stage.addEventListener("pointerleave", closeAfterGrace);
+      puck.addEventListener("pointerleave", () => {
+        // If the device hasn't started opening yet, the user just
+        // brushed past the puck — don't open.
+        if (!isOpen) return;
+        closeAfterGrace();
+      });
+      shell.addEventListener("focusin", openNow);
+      shell.addEventListener("focusout", closeAfterGrace);
+      // Click on the puck still toggles — useful for keyboard
+      // activation (Enter) and as a redundant click-to-open path.
+      puck.addEventListener("click", () => setOpen(!isOpen));
+    }
+
+    document.addEventListener("astro:before-preparation", () => {
+      if (isOpen) setOpen(false);
+    });
+
+    let afterSwapRaf = 0;
+    document.addEventListener("astro:after-swap", () => {
+      rowCentersReady = false;
+      if (afterSwapRaf) cancelAnimationFrame(afterSwapRaf);
+      afterSwapRaf = requestAnimationFrame(() => {
+        afterSwapRaf = requestAnimationFrame(() => {
+          afterSwapRaf = 0;
+          if (!isOpen) return;
+          measure();
+          refreshWheelCenter();
+          snapToDetent(activeIndex);
+        });
+      });
+    });
+
+    /* ---------- initial paint — no layout reads until first open ---------- */
+
+    rows[0]?.classList.add("is-active");
+    activeIndex = 0;
+    writeMeta();
+  };
+
+  initDock();
+</script>

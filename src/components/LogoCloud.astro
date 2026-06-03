@@ -1,19 +1,11 @@
 ---
 import { techLogos } from "../data/tech-logos";
-
-const accentChip: Record<string, string> = {
-  sky:      "chip-sky",
-  coral:    "chip-coral",
-  mint:     "chip-mint",
-  butter:   "chip-butter",
-  lavender: "chip-lavender",
-  rose:     "chip-rose",
-};
+import { chipClass, toAccent } from "../lib/accents";
 ---
 <ul class="flex flex-wrap gap-1.5 reveal-stagger">
   {techLogos.map((logo) => {
-    const className = accentChip[logo.accent ?? "sky"] ?? "chip-sky";
-    const inner = <span class:list={["chip", className]}>{logo.name}</span>;
+    const accent = toAccent(logo.accent, "sky");
+    const inner = <span class:list={["chip", chipClass(accent)]}>{logo.name}</span>;
     return (
       <li>
         {logo.href ? (

@@ -2,13 +2,12 @@
  * Tech logos consumed by LogoCloud.astro.
  * Initial v1 uses styled name pills; SVGs under src/assets/logos/ will replace them later.
  */
-
-export type LogoAccent = "sky" | "coral" | "mint" | "butter" | "lavender" | "rose";
+import type { Accent } from "../lib/accents";
 
 export interface TechLogo {
   name: string;
   href?: string;
-  accent?: LogoAccent;
+  accent?: Accent;
 }
 
 export const techLogos: TechLogo[] = [

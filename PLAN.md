@@ -10,6 +10,7 @@ We keep updating it as new requirements arrive — **before** making major imple
 - Build a **personal portfolio** website that feels like a **welcoming oasis of soft pastels and playful gradients** — warm, colorful, never corporate.
 - Fast, optimized, and easy to maintain.
 - Image-heavy by design — every raster image flows through Astro's `<Image />` component (hard requirement).
+- **Modular + extensible by default.** Prefer small composable components, shared helpers, and single sources of truth over copy‑pasted patterns. If two pieces of code start to look the same, we factor the shared intent into one reusable primitive.
 - Keep a clear separation between:
   - **Design**: visual styling, typography, spacing, colors, motion tokens.
   - **Structure**: layouts, components, page composition, navigation, routing.
@@ -34,11 +35,16 @@ We design like a small magazine, not a SaaS landing page.
 
 - **Every element earns its place.** Buttons, links, cards, animations, sections — each must answer a clear question. If we cannot articulate why something exists, it is removed.
 - **No template thinking.** Industry-standard portfolio patterns (3-card "values" rows, big "Hire me" CTAs, hero buttons that beg for clicks, generic footers with site maps) are off-limits as defaults; we adopt them only when they serve the specific page.
-- **We do not chase the user.** Primary navigation is provided once, in the Header. Pages do not redirect attention back to those same destinations through hero CTAs. The user comes to us at their pace.
+- **We do not chase the user.** Primary navigation is provided once, in the dock. Pages do not redirect attention back to those same destinations through hero CTAs. The user comes to us at their pace.
 - **Quiet beats loud.** Color, motion, and weight are spent like punctuation, not wallpaper.
 - **Personal voice.** Display text has personality, body text reads cleanly, and the occasional handwritten note carries a hand-drawn warmth.
 - **Real-life material language.** The site should feel like real-life objects — polaroids, paper notebook tabs, sticky notes, washi tape, ink stamps, pencil scribbles, handwritten margin notes — rather than abstract digital surfaces. We stay inside a coherent world of personal **stationery / studying / journaling** so the metaphors do not fight each other. We break the standard "this is a website" illusion and replace it with a tactile, timeless one.
 - **Timelessness over trend.** Reference materials that have always existed (paper, ink, tape, photographs) and that will still feel right years from now. Avoid effects that will date the site to a specific year.
+- **Ergonomics over convention — design for the body, not the brand book.** Most portfolio sites import the same mobile patterns from the same template galleries: a hamburger or logo+nav strip pinned to the *top* of the viewport, with everything important sitting where a one-handed phone grip can't comfortably reach. Holding a modern phone, the thumb naturally lives at the **bottom third of the screen**; reaching the top corners requires a regrip or a wrist stretch dozens of times per session. We refuse to inherit that strain just because everyone else does.
+  - Primary controls live at the **bottom edge** on mobile, never the top. The header is intentionally inert decoration; the dock is where the work happens.
+  - Paired actions (open / close, expand / collapse) share the **same physical spot** on the screen whenever possible — so the thumb that opened a sheet doesn't have to travel up to the corner to dismiss it.
+  - Screen-edge real estate is treated as ergonomic real estate, not visual real estate. We pay attention to safe-area insets, one-handed reach zones, and how a finger actually arrives at a target — not just to how a layout reads in a flat mockup.
+  - This is what we mean by **thoughtful design**: defaults are questioned out loud, and we only keep the conventions whose reasoning still holds for *this* site, *this* device, *this* hand.
 
 ---
 
@@ -62,7 +68,9 @@ We design like a small magazine, not a SaaS landing page.
   - **Display** — an expressive serif (e.g. *Instrument Serif*) for headings and editorial moments. Italic when emphasizing.
   - **Body** — a highly readable neutral sans (e.g. *Inter*) for prose and UI.
   - **Hand** — a handwritten accent (e.g. *Caveat*) used sparingly for annotations, section labels, signatures, and "personal voice" moments. **Locked** — we are not switching the handwritten font.
-- **Material vocabulary (current)**: **polaroid photo frames** (hero portrait), **notebook-style paper tabs** (header navigation), **handwritten margin labels** (section identifiers), small **pastel ink** moments in text. Future additions may include **washi tape**, **ink stamps**, **sticky notes**, **pencil scribbles**, and **torn paper edges** — added only when they earn their place.
+- **Material vocabulary (current)**: **polaroid photo frames** (hero portrait), **handwritten margin labels** (section identifiers), **header marginalia** (a single rotating handwritten line in the top strip — different per visit), small **pastel ink** moments in text. Future additions may include **washi tape**, **ink stamps**, **sticky notes**, **pencil scribbles**, and **torn paper edges** — added only when they earn their place.
+  - **Retired**: notebook-style paper tabs for header navigation. Nav has moved to the bottom dock (see Layout Strategy). The paper-tab metaphor may return for *contextual* navigation elsewhere (e.g. project category filters on `/projects`).
+- **Marginalia (header whispers)**: every full page load (refresh) renders a single short handwritten line in the top strip, picked at random from a curated pool in `src/data/marginalia.ts`. In-app navigation keeps the same line because the header is persisted via View Transitions. No `sessionStorage` pinning. Each line should feel like something jotted in the margin of a notebook (e.g. *make a cup of tea before you scroll*, *every page here has a draft folder behind it*).
 - **Motion**: animations are disciplined — CSS + View Transitions first, JS motion only inside islands when needed. Respects `prefers-reduced-motion`.
 - **Performance**: static-first, optimized images via Astro `<Image />`, fast transitions.
 - **Accessibility**: semantic HTML, strong color contrast on white, keyboard-friendly, reduced-motion support.
@@ -81,7 +89,8 @@ We design like a small magazine, not a SaaS landing page.
 | `/resume` | Embedded PDF + download button (certificates **not** rendered) |
 
 - **No dedicated `/about` page** — Home is the about page.
-- **No dedicated `/contact` page** — email + socials live in a **floating dock** at the bottom of the viewport (rendered by `Footer.astro`).
+- **No dedicated `/contact` page** — email + socials live in the right zone of the bottom dock (see Layout Strategy).
+- **Primary navigation lives in the left zone of the bottom dock**, NOT in the header. The header carries only a rotating handwritten marginalia line.
 - Internal navigation uses **Astro View Transitions** for instant, no-reload page swaps.
 
 ---
@@ -93,13 +102,33 @@ We design like a small magazine, not a SaaS landing page.
 - **Whitespace earns its keep.** Padding and margin exist to aid readability and rhythm, never to pad time on page.
 - **No horizontal-rule section dividers.** Section boundaries are communicated by **handwritten margin labels + whitespace**, not by generic `border-top` lines between adjacent components.
 - **Cards size to their own content.** No card stretches its height to match the tallest sibling in its row; each card's height is determined by its own content. Adjacent cards may therefore differ in height — that is correct, not a bug.
-- **Navigation as paper tabs.** The header renders nav items as **notebook-style paper tabs**: rounded-top rectangles, with the active tab "pulled forward" into the page surface (white fill, no bottom edge). The site name is the home link, treated as the notebook's spine label.
-- **The "footer" is a two-state floating dock** at the bottom of the viewport:
-  1. **Resting**: shows a short textual invitation (e.g. *socials — say hello*) mixing display italic + handwritten Caveat. No icons visible.
-  2. **Active (hover / focus / touch)**: the text crossfades into a row of icons (email + socials).
-  3. **Per-icon reveal**: hovering or focusing an individual icon surfaces a small floating **"business card"** above the dock — handle in display italic, one-line handwritten note. On touch devices, icons render directly (no resting text), and tapping navigates to the link.
-  - Icon hover colors echo each brand's signature color, applied to the icon itself (not as a full background fill).
-  - **Touch targets on mobile are ≥ 44 px** per Apple HIG / Material recommendation — the touch-device dock uses larger icon hit areas and slightly more spacing than the desktop dock.
+- **Minimum thumb travel.** Direct expression of the *Ergonomics over convention* principle (see Design Philosophy). All primary controls live within the bottom-third thumb reach zone on mobile; top-edge nav (drawer, fixed top bar, corner hamburger) is rejected on principle. Paired actions (open / close) share a single physical spot so the thumb that triggered an action can reverse it without travelling.
+- **The header is a single line of handwritten marginalia** — that's it. No name, no logo, no nav. One short rotating line picked from `src/data/marginalia.ts`, rendered in Caveat at a comfortable but quiet size. New refresh = new line; in-app navigation keeps the current line because the header is persisted. The header is intentionally thin so it gives almost the entire viewport to content.
+- **One dock — *the Pocket Player* — same device on both viewports, two ergonomic positions.** The dock unifies primary navigation + socials and replaces both the paper-tab header navigation *and* the previous socials-only footer. It is now a small handheld device (iPod / Walkman / Etch-A-Sketch / rotary phone vocabulary) that sits in different corners of the viewport depending on the device, but is otherwise the same component, the same markup, and the same controller.
+  - **Desktop shape — bottom-LEFT tuck → pull-out device.** The Pocket Player tucks itself into the bottom-LEFT corner of the viewport (NOT centred at the bottom — long-form content lives centred on the page, and centring the dock would put it directly in the way of text). At rest, only a small monogram **puck** peeks above the corner — the visual "iPod sticking out of a pocket". Hovering or focusing the puck pulls the whole device out into reach (transform-driven, same family of animation as the previous pill's hover-expand). When the user moves the cursor away, a 260ms grace timer tucks the device back into the pocket. The shell itself has `pointer-events: none`; only the visible peek (puck) and the visible device (when out) are interactive — there is **no invisible dead zone in the corner that blocks page clicks**.
+  - **Mobile shape — bottom-CENTRE puck → tap-to-raise device.** Same device, anchored to bottom-centre with a dim backdrop behind it when open. Tap the puck to raise; tap the backdrop, hit Escape, or use the wheel's `menu` cap to dismiss.
+  - **Both shapes share the same body** — a screen on top, a click-wheel below:
+    - **Top: a screen** — paper-cream LCD tint, holding the items as a **horizontal strip**. Sections are labeled in handwritten Caveat (*wander* for nav, *say hello* for socials). A fixed **highlight band** sits permanently at the centre of the screen; items slide *under* this band as the wheel spins (the Etch-A-Sketch pointer model). Beneath the strip, a small meta field shows the active row's italic handle plus a handwritten one-liner — and **updates live during the drag**, not on release.
+    - **Bottom: a click-wheel** — pure controller, intentionally **large** relative to the device (it is the device's *primary* control, not an afterthought). Compass labels at 12 / 3 / 6 / 9 are **real `<button>`s with honest actions**, not decorative text:
+      - `menu` (top) → close the player (the iPod's "back/up" mental model becomes "tuck the device back into the pocket").
+      - right (skip-forward icon) → step to the next item.
+      - `play` (bottom) → activate the highlighted item (same effect as the centre button — this is faithful to a real iPod, where centre and play are not the same control but produce the same result for menu navigation).
+      - left (skip-back icon) → step to the previous item.
+      - **Centre button** is intentionally blank → activate the highlighted item.
+    - **Inputs supported on the wheel.** Touch drag (mobile), mouse drag (desktop), mouse-wheel scroll over the wheel, two-finger touchpad scroll over the wheel, keyboard arrows when focused. Pointer events are used throughout so the same code path serves all three pointer kinds.
+    - **No top status bar.** Earlier we placed a "menu" handwritten label and a × close button in a top status bar; those are removed. Screen real estate inside the device is precious, and both affordances were redundant: the wheel's `menu` cap is the dedicated close, and the active item's name lives on the screen anyway.
+    - **Three ways to navigate**: spin the wheel and press centre/play, step with the left/right transport caps, or tap any row directly without ever using the wheel. The wheel is for people who want to play; direct tap is for people who don't.
+    - **Three ways to dismiss**: the wheel's `menu` cap, the dim backdrop (mobile) / leaving the corner (desktop), the Escape key. Tapping the puck again also toggles closed.
+    - **Performance contract — non-negotiable.** During any drag, ONLY two elements may transform: the wheel arc (a single `transform: rotate`) and the items list (a single `transform: translateX`). No per-item transforms, no per-item shadows, no synchronous style writes inside `pointermove` (everything RAF-batched), and the active row's meta text mutates **only on detent crossings** so its rate is naturally bounded by snap distance. The wheel rotation accumulator is **unbounded** — when the list reaches its end the wheel keeps spinning visually with the list rubber-banding underneath, so the user never feels the gesture freeze.
+    - **Gesture model.** Each `pointermove` computes the angle change from the *previous* pointer position, not from the drag-start. This eliminates the ±180° wraparound flip that older builds had: the wheel can be spun continuously through any number of full rotations without ever resetting to origin.
+    - **Don't put updating info under the finger.** All dynamic content (the highlight, the active handle, the handwritten note) lives on the screen at the top of the device. The wheel-spinning thumb sits at the bottom and never overlaps the changing region.
+    - **Discoverability of rotation.** The wheel caps are clickable buttons that work even if the user never figures out the spin gesture. Direct row tap is always available as a safe fallback.
+    - **Material vocabulary, expanded.** Vintage handheld devices: the iPod (screen + click-wheel + centre button), the Walkman (cream paper-plastic finish, dashed paper dividers), the Etch-A-Sketch (a knob-driven pointer moving across a closed screen), and the rotary phone (circular thumb spin). These references sit naturally alongside the stationery vocabulary (paper, ink, handwriting) — they're the same tactile-object world, just with mechanism.
+    - **Future hooks (deferred — see Decisions Log).** The data-action dispatcher pattern on the wheel caps is intentionally extensible: a music-player mode and small UX sounds are planned but **not implemented in this pass**. We let the core navigation interaction mature first.
+    - Player uses `role="dialog"` and is `aria-modal="true"` only when the backdrop is present (mobile). Body scroll is locked only on mobile. Player closes automatically across Astro view transitions.
+    - **Why this design?** Earlier attempts each failed in a specific way: the always-visible two-row dock fought content for real-estate; the bookmark-sheet was too conventional; the rotary dial put orbiting items on the rotating surface and tanked the frame rate. The Pocket Player separates the **gesture surface** (the wheel — does very little work, just spins) from the **data surface** (the screen — where items live as plain readable text). That split is what makes the gesture feel like a real device.
+  - The dock is the single most important interactive element on the site. It is the **only** primary navigation surface on either device.
+- **`<DesignFor("iPod click wheel"))>` is now adopted on both desktop and mobile**, paired with a screen-with-pointer (Etch-A-Sketch) model so items are always readable text — not orbiting graphics — and direct row tap remains a safe fallback for any user who never spins the wheel.
 
 ---
 
@@ -114,15 +143,20 @@ We design like a small magazine, not a SaaS landing page.
 ### Structure (layouts & components)
 
 - Layout shells in `src/layouts/` (e.g. `BaseLayout.astro`, `BlogPostLayout.astro`, `ProjectLayout.astro`).
-- Reusable UI blocks in `src/components/` (e.g. `Header.astro`, `Footer.astro`, `ProjectCard.astro`, `BlogCard.astro`, `Timeline.astro`, `Section.astro`, `LogoCloud.astro`, `Media.astro`).
+- Reusable UI blocks in `src/components/` (e.g. `Header.astro`, `Dock.astro`, `ProjectCard.astro`, `BlogCard.astro`, `Timeline.astro`, `Section.astro`, `LogoCloud.astro`, `Media.astro`).
 - `Media.astro` is the **only** image entry point across the site — wraps Astro `<Image />` and hides the provider (see Images & Media).
 - Thin shared helpers live in `src/lib/` (e.g. `src/lib/media.ts` for resolving provider URLs).
-- `Header.astro` consumes `site.nav`. `Footer.astro` renders as a **floating dock** — icons-only for socials + email, no nav links, no copyright text.
+- `Header.astro` renders marginalia only. `Dock.astro` consumes `site.nav` + `site.socials` and is the single navigation + contact surface.
 - Pages in `src/pages/` stay **thin** — compose components, feed data/content.
+- **DRY rule (modular & extensible).** Shared behavior must live in one place:
+  - repeat UI patterns → reusable components
+  - repeat calculations / transforms / measurement logic → helpers in `src/lib/`
+  - repeat constants → design tokens in `global.css` or typed data in `src/data/`
+  - avoid “same code, slightly different” forks; add configuration/props instead.
 
 ### Data (rarely changes)
 
-- `src/data/site.ts` — name, tagline, nav links (Header-only), email + socials (Footer-only), SEO defaults.
+- `src/data/site.ts` — name, tagline, nav links + socials (Dock), email, SEO defaults.
 - `src/data/timeline.ts` — timeline entries shown on Home.
 - `src/data/tech-logos.ts` — logo/cloud metadata consumed by `LogoCloud.astro`.
 - `src/data/certificates.ts` — certificate metadata (stored, **not rendered in v1**).
@@ -208,8 +242,8 @@ src/
     BlogPostLayout.astro
     ProjectLayout.astro
   components/
-    Header.astro            # consumes site.nav
-    Footer.astro            # floating icons-only dock (socials + email)
+    Header.astro            # thin strip rendering a marginalia line; no nav
+    Dock.astro              # bottom dock: [ nav | socials ] zones
     Section.astro
     ProjectCard.astro
     BlogCard.astro
@@ -240,6 +274,7 @@ src/
     timeline.ts
     tech-logos.ts
     certificates.ts
+    marginalia.ts           # rotating handwritten header lines
   assets/                   # chrome-level only (favicon, OG default, brand mark)
     logos/
   styles/
@@ -283,10 +318,17 @@ Body: post MDX. All images use `<Media id="..." />`.
 ### Site data (`src/data/site.ts`)
 
 - `name`, `tagline`, `email`
-- `nav` (array of `{ label, href }`) — consumed by **Header only**
-- `socials` (array of `{ label, href }`) — consumed by **Footer only**
+- `nav` (array of `{ label, href, hand, icon }`) — primary nav, consumed by the **left zone of the dock**. Each item carries its display label, target route, a one-line Caveat note (for the per-icon business card), and an icon key.
+- `socials` (array of `{ label, href }`) — consumed by the **right zone of the dock**.
 - `seo` defaults (title template, description, OG image path)
 - `resume` (PDF path + download filename)
+
+### Marginalia (`src/data/marginalia.ts`)
+
+- A flat array of short handwritten lines (10–30 words each, ideally shorter).
+- Rendered in Caveat in the header.
+- One line per refresh. In-app navigation keeps the current line because the header is persisted via View Transitions.
+- Examples: *make a cup of tea before you scroll*, *every page here has a draft folder behind it*, *no hurry — this is the slow internet*, *you'd probably like the b-sides*.
 
 ### Timeline (`src/data/timeline.ts`)
 
@@ -409,6 +451,23 @@ Stored only; **not rendered in v1**.
 - **2026-05-26 (pm)** — **Cards size to their own content** in any grid (no row-stretching to match the tallest sibling).
 - **2026-05-26 (pm)** — **Navigation renders as notebook-style paper tabs**; active tab is "pulled forward" into the page surface.
 - **2026-05-26 (pm)** — **Dock is two-state**: resting textual invitation → active row of icons → per-icon floating "business card" tooltip. Icon hover colors echo each brand's signature color. On touch devices the dock skips the resting state and exposes icons directly.
+- **2026-05-27** — **Minimum thumb travel is a design principle.** Top-of-screen primary navigation is rejected on mobile because thumbs don't comfortably reach there on tall phones.
+- **2026-05-27** — **Header carries only a rotating "marginalia" line** (handwritten, picked per session). No name, no logo, no nav.
+- **2026-05-27** — **Paper-tab header navigation is retired.** The pattern may still appear for contextual navigation elsewhere (e.g. project category filters) but is no longer the primary nav surface.
+- **2026-05-27** — **Primary navigation moves into the bottom dock**, sharing one shell with socials. Layout: `[ nav | divider | socials ]`. Same two-state mechanic, same business-card tooltips, same touch-drag pattern. The dock is the single most important interactive element on the site.
+- **2026-05-27** — **Home link becomes a monogram icon ("S" in display italic)** as the first item in the dock's left zone. The site name is no longer displayed anywhere in the chrome.
+- **2026-05-27** — **iPod click-wheel / d-pad navigation considered and rejected** for primary nav (discoverability, accessibility, theme drift). Reserved as a possible future easter-egg page where it can be delightful without carrying load.
+- **2026-05-29** — **Mobile dock redesigned: bookmark tab → notebook sheet.** The always-visible two-row mobile dock and the press-and-hold-and-drag interaction are retired. Mobile now shows a small paper-bookmark tab pinned to the bottom-center edge; tapping it opens a labeled-rows sheet that contains both nav and socials. Press-and-hold-and-drag, the per-icon floating business cards, and the stacked-rows layout no longer exist on touch devices — those affordances stay on desktop only.
+- **2026-05-29** — **Ergonomics over convention is now a first-class design principle** (added to Design Philosophy). Mobile primary controls live at the bottom edge, never the top, because that's where the thumb actually rests on a phone. Paired actions (open / close) share the same physical coordinate — the bookmark tab keeps its position when the sheet opens and only swaps face from `chevron-up · "menu"` to `× · "close"`. We will not import top-of-screen nav patterns from the standard portfolio template gallery just because everyone uses them.
+- **2026-05-29 (pm)** — **Mobile dock redesigned again: Pocket Player.** Replaces the rotary-dial attempt, which suffered from per-item nested transforms (every drag frame restyled all 8 items + their gradients/shadows) and didn't hold the design language. The Pocket Player splits the **gesture surface** (a click-wheel that just rotates, carrying no items) from the **data surface** (a small LCD-tinted screen above the wheel, holding items as a plain text list with a fixed centre highlight band). Spinning the wheel translates the list past the band; the active row's handwritten footer updates only on snap. References, intentionally expanded: **iPod** (screen + click-wheel + centre button), **Walkman** (cream paper-plastic finish), **Etch-A-Sketch** (knob-driven pointer across a closed screen), **rotary phone** (circular thumb spin). The previous "iPod-style click wheel rejected for primary nav" decision is superseded by this one, because the discoverability concern is now solved by the screen-with-pointer model and by always-tappable rows as a fallback.
+- **2026-05-29 (pm)** — **Mobile dock has a dedicated close affordance.** A clearly labeled **×** button in the top-right of the Pocket Player's status bar joins the existing dim backdrop and Escape key as three independent dismiss paths. Universal mental model; never depends on the user remembering an unconventional gesture.
+- **2026-05-29 (pm)** — **Performance is now an explicit contract for the mobile dock.** During any drag, only two elements may animate: the wheel arc (`transform: rotate`) and the items list (`transform: translateX`). No per-item transforms, no per-item box-shadows, no DOM text mutations during the drag itself, no synchronous style writes inside `pointermove` (all writes RAF-batched). Heavy decorative effects (inner ring shadow) are dropped under `.is-dragging`. This is a load-bearing rule: the dock is the most-touched interaction on the site and must feel like a real device, not a fragile demo.
+- **2026-05-29 (pm)** — **Material vocabulary expanded** from "stationery / journaling" to "stationery + vintage handheld devices". The two worlds share the same tactile, paper-cream, ink-and-handwriting finish — they read as a single coherent world rather than two metaphors competing for attention.
+- **2026-05-30** — **Pocket Player adopted on desktop too; the two-zone floating pill is retired.** The desktop dock is now the *same component* as the mobile dock — same markup, same controller, same brand colours. Only the position differs: bottom-LEFT on desktop (so it stays out of the way of centred long-form content), bottom-CENTRE on mobile. The previous "expand-on-hover pill" hover-to-grow vocabulary is preserved in spirit: the closed desktop state shows only a small monogram puck peeking out of the corner, and hovering or focusing the puck "pulls the device out of the pocket" with the same family of transitions. Wheel control on desktop accepts mouse drag and mouse-wheel / touchpad scroll. Page hit-testing is unaffected — the shell carries no invisible hit area; only the visible peek and the visible device are interactive.
+- **2026-05-30** — **Wheel controller rewritten — 5 user-reported defects addressed in one pass.** (1) Janky 180° flip-to-origin: replaced absolute-from-start angle math with **incremental angle delta** between successive `pointermove` events; the wheel can now be spun continuously through any number of rotations without ever resetting. (2) Wheel freezing at the end of the list: the wheel rotation accumulator is now **unbounded**; only the items-list translation is clamped + rubber-banded so the user feels the edge while the wheel itself keeps spinning visually. (3) Description updates only on release: the screen footer now updates **live during the drag** at every detent crossing (naturally rate-limited to one cheap `textContent` write per real row, no thrash). (4) Wheel too small relative to the device: wheel grew from `~7.5–8.5rem` to `12.4rem` on desktop and proportionally on mobile — it now reads as the device's *primary* control. (5) UI clutter: the top status bar (handwritten "menu" label + dedicated × close button) is **removed entirely**; its responsibilities migrated into the wheel itself (the `menu` cap is now the close, the active row's name lives on the screen).
+- **2026-05-30** — **Compass cap labels are real `<button>`s with honest actions.** `menu` (top) closes the player, right (skip-forward) steps to the next item, `play` (bottom) activates the highlighted item, left (skip-back) steps to the previous item. The centre button also activates the highlighted item — faithful to a real iPod. We will not ship UI elements that "don't do anything".
+- **2026-05-30** — **Pointer Events used throughout the wheel** (touch / mouse / pen all run through one code path), with `setPointerCapture` so the gesture survives the cursor leaving the wheel rim. The wheel additionally listens for mouse-wheel / touchpad-scroll input as a no-drag alternative for trackpad users. RAF-batched style writes; no synchronous style work inside `pointermove`.
+- **2026-05-30** — **Music-player mode and small UX sounds are designed-for, not implemented.** The `data-action` dispatcher pattern on the wheel caps already accepts new actions (`pause`, `next-track`, etc.) without markup churn. Audio cues will subscribe to a future `dock:active` / `dock:detent` event from the controller. **We let the core navigation interaction mature first** before layering in music or sound — explicit user direction.
 
 ---
 

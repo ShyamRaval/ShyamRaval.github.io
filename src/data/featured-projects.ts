@@ -5,14 +5,7 @@
  * `src/content/projects/<slug>/index.mdx` frontmatter; this file will be replaced
  * by a content-collection query in the next implementation pass.
  */
-
-export type ProjectAccent =
-  | "coral"
-  | "sky"
-  | "mint"
-  | "butter"
-  | "lavender"
-  | "rose";
+import type { Accent } from "../lib/accents";
 
 export interface FeaturedProject {
   slug: string;
@@ -24,7 +17,7 @@ export interface FeaturedProject {
   /** Display year for editorial layout (e.g. "2026"). */
   year?: string;
   /** Accent pastel applied to tags and hover. */
-  accent?: ProjectAccent;
+  accent?: Accent;
   links?: {
     github?: string;
     live?: string;
