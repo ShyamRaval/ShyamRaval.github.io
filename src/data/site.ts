@@ -1,15 +1,14 @@
 /**
  * Site-wide data that rarely changes.
  *
- * Per PLAN.md (2026-05-27): primary navigation now lives in the bottom
- * dock (NOT the header). Each nav entry carries:
+ * Per PLAN.md (2026-05-27): primary navigation now lives in the
+ * Navigator (NOT the header). Each nav entry carries:
  *   - label  : display name
  *   - href   : target route
- *   - icon   : icon key the Dock component knows how to render
+ *   - icon   : icon key the Navigator component knows how to render
  *              ("monogram" → "S" in display italic; otherwise an SVG)
- *   - hand   : one-line handwritten note shown in the per-icon
- *              business card tooltip above the dock
- *   - handle : pretty label shown above `hand` in the business card
+ *   - hand   : one-line handwritten note on the Navigator screen
+ *   - handle : pretty label shown in the Navigator screen meta
  */
 
 import type { IconName } from "../lib/icons";
@@ -106,7 +105,7 @@ export const site: SiteData = {
     ogImage: "/og-default.png",
   },
   resume: {
-    pdfPath: "/resume.pdf",
-    downloadName: "ShyamRaval-Resume.pdf",
+    pdfPath: "/Raval_Dinesh.pdf",
+    downloadName: "Raval_Dinesh-Resume.pdf",
   },
 };

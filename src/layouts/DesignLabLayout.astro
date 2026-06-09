@@ -1,0 +1,193 @@
+---
+/**
+ * DesignLabLayout — shared shell for the TEMPORARY /design-lab tools.
+ *
+ * Standalone on purpose (own <html>, no BaseLayout / Navigator / ClientRouter)
+ * so the lab stays fully isolated from the real site and can own its <head>.
+ * Imports global.css only for the design tokens + utilities, so every lab
+ * page reads in the real visual language.
+ *
+ * The whole lab is throwaway: delete the `src/pages/design-lab/` folder and
+ * this layout to remove it entirely. Nothing in production references it.
+ *
+ * Pages add page-specific <head> entries (e.g. extra font files) via the
+ * named "head" slot.
+ */
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  /** Which tab to highlight: "home" | "fonts" | "colors" | "tokens" */
+  active?: string;
+  /** Short description shown under the page title. */
+  blurb?: string;
+}
+
+const { title, active, blurb } = Astro.props;
+
+const tabs = [
+  { id: "home", label: "Overview", href: "/design-lab" },
+  { id: "fonts", label: "Fonts", href: "/design-lab/fonts" },
+  { id: "colors", label: "Colors", href: "/design-lab/colors" },
+  { id: "tokens", label: "Tokens", href: "/design-lab/tokens" },
+  { id: "animations", label: "Animations", href: "/design-lab/animations" },
+];
+
+const baseFonts =
+  "https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700" +
+  "&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{title} — Design Lab</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href={baseFonts} />
+
+    <slot name="head" />
+  </head>
+
+  <body class="lab-body">
+    <header class="lab-topbar">
+      <div class="lab-topbar-inner">
+        <a class="lab-brand font-hand ink-coral" href="/design-lab">design lab</a>
+        <nav class="lab-nav" aria-label="Design lab sections">
+          {
+            tabs.map((t) => (
+              <a
+                href={t.href}
+                class:list={["lab-tab", { "is-active": t.id === active }]}
+                aria-current={t.id === active ? "page" : undefined}
+              >
+                {t.label}
+              </a>
+            ))
+          }
+        </nav>
+      </div>
+    </header>
+
+    <main class="lab-main">
+      <div class="lab-pagehead">
+        <h1 class="lab-pagetitle">{title}</h1>
+        {blurb && <p class="lab-blurb">{blurb}</p>}
+      </div>
+      <slot />
+    </main>
+
+    <footer class="lab-foot">
+      <p>
+        Throwaway tooling — delete <code>src/pages/design-lab/</code> +
+        <code>DesignLabLayout.astro</code> to remove.
+      </p>
+    </footer>
+
+    <style>
+      .lab-body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .lab-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: color-mix(in srgb, var(--color-surface) 86%, transparent);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--color-edge);
+      }
+      .lab-topbar-inner {
+        max-width: 70rem;
+        margin-inline: auto;
+        padding: 0.7rem var(--spacing-gutter);
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+      }
+      .lab-brand {
+        font-size: 1.5rem;
+        line-height: 1;
+      }
+      .lab-nav {
+        display: flex;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+      }
+      .lab-tab {
+        font-family: var(--font-sans);
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--color-ink-soft);
+        padding: 0.3rem 0.7rem;
+        border-radius: var(--radius-pill);
+        border: 1px solid transparent;
+        transition:
+          background var(--motion-duration-fast) var(--motion-ease-out),
+          color var(--motion-duration-fast) var(--motion-ease-out),
+          border-color var(--motion-duration-fast) var(--motion-ease-out);
+      }
+      .lab-tab:hover {
+        color: var(--color-ink);
+        border-color: var(--color-edge-strong);
+      }
+      .lab-tab.is-active {
+        color: var(--color-pastel-lavender-deep);
+        background: color-mix(in srgb, var(--color-pastel-lavender) 28%, var(--color-surface));
+        border-color: var(--color-pastel-lavender-deep);
+      }
+
+      .lab-main {
+        flex: 1;
+        width: 100%;
+        max-width: 70rem;
+        margin-inline: auto;
+        padding: 2rem var(--spacing-gutter) 4rem;
+      }
+      .lab-pagehead {
+        margin-bottom: 1.75rem;
+      }
+      .lab-pagetitle {
+        font-family: var(--font-display);
+        font-size: clamp(2.25rem, 3vw + 1rem, 3.25rem);
+        margin: 0;
+        line-height: 1.05;
+      }
+      .lab-blurb {
+        font-family: var(--font-sans);
+        color: var(--color-ink-muted);
+        font-size: 0.95rem;
+        margin: 0.4rem 0 0;
+        max-width: 46rem;
+      }
+
+      .lab-foot {
+        border-top: 1px solid var(--color-edge);
+        padding: 1rem var(--spacing-gutter);
+        text-align: center;
+      }
+      .lab-foot p {
+        margin: 0;
+        font-family: var(--font-sans);
+        font-size: 0.75rem;
+        color: var(--color-ink-faint);
+      }
+      .lab-foot code,
+      .lab-blurb code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.72rem;
+        background: var(--color-surface-muted);
+        padding: 0.05rem 0.3rem;
+        border-radius: 4px;
+        color: var(--color-ink-soft);
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Section from "../../components/Section.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+import { getProjects } from "../../lib/content";
+
+const projects = await getProjects();
+---
+<BaseLayout
+  title="Projects"
+  description="Things I've designed and built — case studies, not a list."
+>
+  <Section label="things I've made" labelAccent="coral" size="lg">
+    <h1 class="font-display leading-[1.05]">The work</h1>
+    <p class="mt-4 max-w-xl text-base md:text-lg text-[color:var(--color-ink-soft)] leading-relaxed">
+      A handful of projects I&rsquo;ve cared about enough to write up. Each
+      card opens into a short case study &mdash; the idea, the approach, and
+      the bits worth remembering.
+    </p>
+
+    <ul class="mt-8 grid gap-5 sm:grid-cols-2 items-start reveal-stagger list-none p-0">
+      {projects.map((entry) => (
+        <li class="self-start"><ProjectCard entry={entry} /></li>
+      ))}
+    </ul>
+  </Section>
+</BaseLayout>

@@ -1,0 +1,311 @@
+---
+/**
+ * /design-lab/colors — living reference of the palette tokens defined in
+ * the @theme block of global.css. Click any swatch to copy its CSS
+ * variable. Values are mirrored here for labelling; the swatches render
+ * straight from the live `var(--color-*)` tokens, so they can't drift in
+ * appearance.
+ */
+import DesignLabLayout from "../../layouts/DesignLabLayout.astro";
+
+type Swatch = { token: string; hex: string; dark?: boolean };
+type Group = { title: string; blurb: string; swatches: Swatch[] };
+
+// Pastel accents come in soft + deep pairs (the deep is used for text /
+// "ink" accents and hovers).
+const pastels: { name: string; soft: Swatch; deep: Swatch }[] = [
+  { name: "Sky", soft: { token: "--color-pastel-sky", hex: "#aee0f8" }, deep: { token: "--color-pastel-sky-deep", hex: "#3fa6db" } },
+  { name: "Coral", soft: { token: "--color-pastel-coral", hex: "#ffc4b8" }, deep: { token: "--color-pastel-coral-deep", hex: "#e8624a" } },
+  { name: "Mint", soft: { token: "--color-pastel-mint", hex: "#b6efd6" }, deep: { token: "--color-pastel-mint-deep", hex: "#3aaf80" } },
+  { name: "Butter", soft: { token: "--color-pastel-butter", hex: "#ffe6a7" }, deep: { token: "--color-pastel-butter-deep", hex: "#d9952e" } },
+  { name: "Lavender", soft: { token: "--color-pastel-lavender", hex: "#d9c8ff" }, deep: { token: "--color-pastel-lavender-deep", hex: "#8c64ec" } },
+  { name: "Rose", soft: { token: "--color-pastel-rose", hex: "#ffd1ea" }, deep: { token: "--color-pastel-rose-deep", hex: "#d35aa3" } },
+];
+
+const groups: Group[] = [
+  {
+    title: "Ink",
+    blurb: "Text colors, darkest to faintest.",
+    swatches: [
+      { token: "--color-ink", hex: "#1a1530", dark: true },
+      { token: "--color-ink-soft", hex: "#4a4566", dark: true },
+      { token: "--color-ink-muted", hex: "#7a7591", dark: true },
+      { token: "--color-ink-faint", hex: "#b8b3c9" },
+    ],
+  },
+  {
+    title: "Surfaces",
+    blurb: "The quiet canvas the pastels sit on.",
+    swatches: [
+      { token: "--color-surface", hex: "#ffffff" },
+      { token: "--color-surface-muted", hex: "#faf9fc" },
+      { token: "--color-surface-soft", hex: "#fcfafa" },
+    ],
+  },
+  {
+    title: "Borders",
+    blurb: "Hairline edges, barely-there.",
+    swatches: [
+      { token: "--color-edge", hex: "#efeaff" },
+      { token: "--color-edge-strong", hex: "#ddd4f5" },
+    ],
+  },
+];
+---
+
+<DesignLabLayout
+  title="Colors"
+  active="colors"
+  blurb="The palette from the @theme block in global.css. Click any swatch to copy its CSS variable."
+>
+  <section class="cl-section">
+    <h2 class="cl-h2">Pastel accents</h2>
+    <p class="cl-note">Each accent has a soft tint and a deep "ink" variant used for text and hovers.</p>
+    <div class="cl-pastels">
+      {
+        pastels.map((p) => (
+          <div class="cl-pair">
+            <p class="cl-pair-name">{p.name}</p>
+            <button
+              type="button"
+              class="cl-swatch cl-swatch--tall"
+              style={`background: var(${p.soft.token})`}
+              data-token={p.soft.token}
+            >
+              <span class="cl-chip-meta">
+                <code>{p.soft.token.replace("--color-", "")}</code>
+                <span>{p.soft.hex}</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="cl-swatch cl-swatch--tall cl-on-dark"
+              style={`background: var(${p.deep.token})`}
+              data-token={p.deep.token}
+            >
+              <span class="cl-chip-meta">
+                <code>{p.deep.token.replace("--color-", "")}</code>
+                <span>{p.deep.hex}</span>
+              </span>
+            </button>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="cl-section">
+    <h2 class="cl-h2">Gradient</h2>
+    <p class="cl-note">
+      The only gradient in the system — used for accent text via
+      <code>.text-gradient</code>, never as a full-page wash.
+    </p>
+    <div class="cl-gradient-demo">
+      <span class="text-gradient cl-gradient-text">An oasis of code &amp; craft</span>
+    </div>
+    <div class="cl-gradient-bar"></div>
+  </section>
+
+  {
+    groups.map((g) => (
+      <section class="cl-section">
+        <h2 class="cl-h2">{g.title}</h2>
+        <p class="cl-note">{g.blurb}</p>
+        <div class="cl-row">
+          {g.swatches.map((s) => (
+            <button
+              type="button"
+              class:list={["cl-swatch", { "cl-on-dark": s.dark }]}
+              style={`background: var(${s.token})`}
+              data-token={s.token}
+            >
+              <span class="cl-chip-meta">
+                <code>{s.token.replace("--color-", "")}</code>
+                <span>{s.hex}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+    ))
+  }
+
+  <p class="cl-toast" id="cl-toast" aria-live="polite"></p>
+</DesignLabLayout>
+
+<style>
+  .cl-section {
+    padding: 1.25rem 0 1.75rem;
+    border-bottom: 1px dashed var(--color-edge);
+  }
+  .cl-h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 400;
+    margin: 0;
+  }
+  .cl-note {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--color-ink-muted);
+    margin: 0.2rem 0 1rem;
+  }
+  .cl-note code,
+  .cl-chip-meta code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+  }
+
+  .cl-pastels {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  @media (min-width: 620px) {
+    .cl-pastels {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (min-width: 900px) {
+    .cl-pastels {
+      grid-template-columns: repeat(6, 1fr);
+    }
+  }
+  .cl-pair-name {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--color-ink-soft);
+    margin: 0 0 0.4rem;
+  }
+  .cl-pair .cl-swatch:first-of-type {
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+  }
+  .cl-pair .cl-swatch:last-of-type {
+    border-radius: 0 0 var(--radius-card) var(--radius-card);
+    margin-top: -1px;
+  }
+
+  .cl-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .cl-row .cl-swatch {
+    flex: 1 1 9rem;
+    border-radius: var(--radius-card);
+  }
+
+  .cl-swatch {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 4.5rem;
+    padding: 0.5rem;
+    border: 1px solid var(--color-edge-strong);
+    cursor: pointer;
+    text-align: left;
+    transition: transform var(--motion-duration-fast) var(--motion-ease-out);
+  }
+  .cl-swatch--tall {
+    min-height: 5.5rem;
+    width: 100%;
+  }
+  .cl-swatch:hover {
+    transform: translateY(-2px);
+    z-index: 1;
+  }
+  .cl-chip-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+    padding: 0.15rem 0.4rem;
+    border-radius: var(--radius-tight);
+    color: var(--color-ink);
+  }
+  .cl-chip-meta span {
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    color: var(--color-ink-muted);
+  }
+  .cl-on-dark .cl-chip-meta {
+    background: color-mix(in srgb, var(--color-ink) 70%, transparent);
+    color: #fff;
+  }
+  .cl-on-dark .cl-chip-meta span {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .cl-gradient-demo {
+    margin-bottom: 0.75rem;
+  }
+  .cl-gradient-text {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw + 1rem, 3.5rem);
+    line-height: 1.05;
+  }
+  .cl-gradient-bar {
+    height: 3rem;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-edge-strong);
+    background: linear-gradient(
+      100deg,
+      var(--color-pastel-coral-deep) 0%,
+      var(--color-pastel-butter-deep) 35%,
+      var(--color-pastel-lavender-deep) 70%,
+      var(--color-pastel-sky-deep) 100%
+    );
+  }
+
+  .cl-toast {
+    position: fixed;
+    bottom: 1.25rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(1rem);
+    background: var(--color-ink);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-nav);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity var(--motion-duration-fast) var(--motion-ease-out),
+      transform var(--motion-duration-fast) var(--motion-ease-out);
+  }
+  .cl-toast.is-shown {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+
+<script>
+  const toast = document.getElementById("cl-toast");
+  let toastTimer = 0;
+
+  const showToast = (msg: string) => {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add("is-shown");
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toast.classList.remove("is-shown"), 1400);
+  };
+
+  document
+    .querySelectorAll<HTMLButtonElement>(".cl-swatch")
+    .forEach((sw) =>
+      sw.addEventListener("click", async () => {
+        const token = sw.dataset.token ?? "";
+        const text = `var(${token})`;
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast(`Copied ${text}`);
+        } catch {
+          showToast(text);
+        }
+      }),
+    );
+</script>

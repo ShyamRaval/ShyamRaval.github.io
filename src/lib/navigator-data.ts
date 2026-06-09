@@ -1,10 +1,10 @@
 /**
- * Dock data — derives the dock's nav + social rows from `site` data.
+ * Navigator data — derives the Navigator's nav + social rows from `site` data.
  *
  * Why this exists:
- *   The Dock component used to inline three near-identical `if (linkedin)
+ *   The Navigator component used to inline three near-identical `if (linkedin)
  *   socials.push({...})` blocks plus its own `handleFromHref` helper. Adding
- *   a new social network meant editing the Dock template AND duplicating the
+ *   a new social network meant editing the Navigator template AND duplicating the
  *   block. Now there's a single brand registry; adding a network is a
  *   one-line append below.
  *
@@ -13,17 +13,17 @@
  *      site.socials[*].label, case-insensitive), the icon name, the
  *      handwritten copy, and the handle-derivation rule.
  *   2. Add the matching SVG entry in `src/components/Icon.astro`.
- *   That's it — no Dock template edits.
+ *   That's it — no Navigator template edits.
  */
 import type { IconName } from "./icons";
 import type { SiteData, NavLink } from "../data/site";
 
-export type DockBrand = "email" | "github" | "linkedin" | "x";
+export type NavigatorBrand = "email" | "github" | "linkedin" | "x";
 
-export interface DockSocial {
+export interface NavigatorSocial {
   href: string;
   label: string;
-  brand: DockBrand;
+  brand: NavigatorBrand;
   icon: IconName;
   handle: string;
   hand: string;
@@ -31,7 +31,7 @@ export interface DockSocial {
 }
 
 interface BrandEntry {
-  brand: DockBrand;
+  brand: NavigatorBrand;
   /** Substring tested (lowercase) against `site.socials[*].label`. */
   match: string[];
   icon: IconName;
@@ -60,15 +60,15 @@ const handleFromHref = (href: string, prefix = "@"): string => {
 };
 
 /**
- * Build the dock's social rows from `site.socials`. The email entry is
+ * Build the Navigator's social rows from `site.socials`. The email entry is
  * synthesised from `site.email` (no socials array entry needed).
  *
  * Rows appear in the order: email, then each registered brand that has
  * a matching socials entry — preserving registry order, not the order
  * brands appear in `site.socials`.
  */
-export function getDockSocials(site: SiteData): DockSocial[] {
-  const rows: DockSocial[] = [
+export function getNavigatorSocials(site: SiteData): NavigatorSocial[] {
+  const rows: NavigatorSocial[] = [
     {
       href: `mailto:${site.email}`,
       label: "Email",

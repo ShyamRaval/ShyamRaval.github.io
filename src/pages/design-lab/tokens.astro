@@ -1,0 +1,255 @@
+---
+/**
+ * /design-lab/tokens — visual reference for the non-color design tokens:
+ * spacing, radii, shadows, and motion. All examples render from the live
+ * CSS variables in global.css; the labels mirror their declared values.
+ */
+import DesignLabLayout from "../../layouts/DesignLabLayout.astro";
+
+const spacing = [
+  { token: "--spacing-gutter", value: "1.25rem" },
+  { token: "--spacing-section", value: "3rem" },
+  { token: "--spacing-section-lg", value: "5rem" },
+];
+
+const radii = [
+  { token: "--radius-tight", value: "0.5rem" },
+  { token: "--radius-card", value: "0.875rem" },
+  { token: "--radius-pill", value: "9999px" },
+];
+
+const shadows = [
+  { token: "--shadow-soft", value: "0 6px 18px -10px rgba(40,30,80,.18)" },
+  { token: "--shadow-nav", value: "0 12px 28px -16px rgba(40,30,80,.28), inset highlight" },
+];
+
+const durations = [
+  { token: "--motion-duration-instant", value: "80ms" },
+  { token: "--motion-duration-fast", value: "160ms" },
+  { token: "--motion-duration-base", value: "280ms" },
+  { token: "--motion-duration-slow", value: "520ms" },
+];
+
+const eases = [
+  { token: "--motion-ease-out", value: "cubic-bezier(0.22, 1, 0.36, 1)" },
+  { token: "--motion-ease-in-out", value: "cubic-bezier(0.65, 0, 0.35, 1)" },
+  { token: "--motion-ease-spring", value: "cubic-bezier(0.34, 1.56, 0.64, 1)" },
+];
+---
+
+<DesignLabLayout
+  title="Tokens"
+  active="tokens"
+  blurb="Spacing, radii, shadows, and motion tokens from global.css. Hover the motion row to replay each curve."
+>
+  <section class="tk-section">
+    <h2 class="tk-h2">Spacing</h2>
+    <div class="tk-list">
+      {
+        spacing.map((s) => (
+          <div class="tk-item">
+            <div class="tk-bar" style={`width: var(${s.token})`} />
+            <div class="tk-meta">
+              <code>{s.token.replace("--spacing-", "")}</code>
+              <span>{s.value}</span>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="tk-section">
+    <h2 class="tk-h2">Radii</h2>
+    <div class="tk-row">
+      {
+        radii.map((r) => (
+          <div class="tk-radius-card">
+            <div class="tk-radius-box" style={`border-radius: var(${r.token})`} />
+            <div class="tk-meta">
+              <code>{r.token.replace("--radius-", "")}</code>
+              <span>{r.value}</span>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="tk-section">
+    <h2 class="tk-h2">Shadows</h2>
+    <div class="tk-row">
+      {
+        shadows.map((s) => (
+          <div class="tk-shadow-card">
+            <div class="tk-shadow-box" style={`box-shadow: var(${s.token})`} />
+            <div class="tk-meta">
+              <code>{s.token.replace("--shadow-", "")}</code>
+              <span>{s.value}</span>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="tk-section">
+    <h2 class="tk-h2">Motion — duration</h2>
+    <p class="tk-note">Hover a row to play the move at that duration.</p>
+    <div class="tk-list">
+      {
+        durations.map((d) => (
+          <div class="tk-motion" data-prop="duration">
+            <div class="tk-track">
+              <span class="tk-dot" style={`transition-duration: var(${d.token})`} />
+            </div>
+            <div class="tk-meta">
+              <code>{d.token.replace("--motion-", "")}</code>
+              <span>{d.value}</span>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="tk-section">
+    <h2 class="tk-h2">Motion — easing</h2>
+    <p class="tk-note">Same distance + duration (520ms), different curves.</p>
+    <div class="tk-list">
+      {
+        eases.map((e) => (
+          <div class="tk-motion" data-prop="ease">
+            <div class="tk-track">
+              <span class="tk-dot" style={`transition-timing-function: var(${e.token})`} />
+            </div>
+            <div class="tk-meta">
+              <code>{e.token.replace("--motion-", "")}</code>
+              <span>{e.value}</span>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+</DesignLabLayout>
+
+<style>
+  .tk-section {
+    padding: 1.25rem 0 1.75rem;
+    border-bottom: 1px dashed var(--color-edge);
+  }
+  .tk-h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 400;
+    margin: 0 0 0.85rem;
+  }
+  .tk-note {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--color-ink-muted);
+    margin: -0.5rem 0 1rem;
+  }
+  .tk-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .tk-meta code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    color: var(--color-ink);
+  }
+  .tk-meta span {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    color: var(--color-ink-muted);
+  }
+
+  .tk-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .tk-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .tk-bar {
+    height: 1.1rem;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(
+      90deg,
+      var(--color-pastel-lavender),
+      var(--color-pastel-lavender-deep)
+    );
+    flex-shrink: 0;
+  }
+
+  .tk-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+  }
+  .tk-radius-card,
+  .tk-shadow-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .tk-radius-box {
+    width: 7rem;
+    height: 5rem;
+    background: color-mix(in srgb, var(--color-pastel-sky) 60%, var(--color-surface));
+    border: 1px solid var(--color-pastel-sky-deep);
+  }
+  .tk-shadow-box {
+    width: 9rem;
+    height: 5rem;
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  .tk-motion {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .tk-track {
+    position: relative;
+    flex: 1;
+    max-width: 22rem;
+    height: 1.6rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-edge);
+    overflow: hidden;
+  }
+  .tk-dot {
+    position: absolute;
+    top: 50%;
+    left: 0.3rem;
+    width: 1rem;
+    height: 1rem;
+    margin-top: -0.5rem;
+    border-radius: 50%;
+    background: var(--color-pastel-coral-deep);
+    transition-property: transform;
+    transform: translateX(0);
+  }
+  .tk-motion:hover .tk-dot,
+  .tk-motion:focus-within .tk-dot {
+    transform: translateX(19rem);
+  }
+  @media (max-width: 520px) {
+    .tk-motion:hover .tk-dot,
+    .tk-motion:focus-within .tk-dot {
+      transform: translateX(60vw);
+    }
+  }
+  .tk-meta {
+    min-width: 12rem;
+  }
+</style>

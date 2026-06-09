@@ -1,0 +1,59 @@
+---
+/**
+ * Resume — embeds the PDF inline with a native <object>, with a
+ * download button and a graceful fallback for browsers that can't
+ * render PDFs inline (per PLAN.md "Resume Page"). Certificates are
+ * intentionally NOT rendered in v1.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { site } from "../data/site";
+
+const { pdfPath, downloadName } = site.resume;
+---
+<BaseLayout
+  title="Résumé"
+  description={`The formal version of ${site.name} — view inline or download the PDF.`}
+>
+  <section class="container-page section">
+    <div class="flex flex-wrap items-end justify-between gap-5">
+      <div>
+        <p class="font-hand text-2xl ink-mint">the formal version</p>
+        <h1 class="mt-1">Résumé</h1>
+      </div>
+
+      <a
+        href={pdfPath}
+        download={downloadName}
+        class="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-edge-strong)] bg-white px-5 py-2.5 text-sm font-medium shadow-[var(--shadow-soft)] transition-colors hover:border-[color:var(--color-pastel-lavender-deep)] hover:text-[color:var(--color-pastel-lavender-deep)]"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3v12" />
+          <path d="m7 11 5 5 5-5" />
+          <path d="M5 21h14" />
+        </svg>
+        Download PDF
+      </a>
+    </div>
+
+    <div
+      class="mt-7 card-quiet overflow-hidden"
+      style="height: min(82vh, 60rem);"
+    >
+      <object data={pdfPath} type="application/pdf" class="w-full h-full">
+        <div class="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+          <p class="font-hand text-2xl ink-coral">your browser won&rsquo;t show the PDF here</p>
+          <p class="text-sm text-[color:var(--color-ink-soft)] max-w-sm">
+            No problem &mdash; you can open it in a new tab or download it directly.
+          </p>
+          <a
+            href={pdfPath}
+            download={downloadName}
+            class="mt-1 link-underline ink-lavender font-hand text-xl"
+          >
+            download the résumé &darr;
+          </a>
+        </div>
+      </object>
+    </div>
+  </section>
+</BaseLayout>

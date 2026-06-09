@@ -1,33 +1,26 @@
 ---
+import type { CollectionEntry } from "astro:content";
 import Media from "./Media.astro";
 import { type Accent, chipClass } from "../lib/accents";
-
-interface Project {
-  slug: string;
-  title: string;
-  summary: string;
-  thumbnail: string;
-  tags: string[];
-  accent?: Accent;
-  year?: string;
-}
+import { thumbnailId, yearOf } from "../lib/content";
 
 interface Props {
-  project: Project;
-  href?: string;
+  entry: CollectionEntry<"projects">;
   size?: "compact" | "default";
 }
 
-const { project, href, size = "default" } = Astro.props;
-const linkHref = href ?? `/projects/${project.slug}`;
-const accent: Accent = project.accent ?? "coral";
+const { entry, size = "default" } = Astro.props;
+const { title, summary, tags } = entry.data;
+const accent: Accent = entry.data.accent ?? "coral";
+const href = `/projects/${entry.id}`;
+const year = yearOf(entry.data.publishedAt);
 ---
-<article class="card-quiet overflow-hidden self-start">
-  <a href={linkHref} class="block focus:outline-none">
+<article class="card-quiet overflow-hidden self-start group">
+  <a href={href} class="block focus:outline-none">
     <div class="aspect-[5/3] overflow-hidden border-b border-[color:var(--color-edge)] bg-[color:var(--color-surface-muted)]">
       <Media
-        id={project.thumbnail}
-        alt={`${project.title} — thumbnail`}
+        id={thumbnailId(entry)}
+        alt={`${title} — thumbnail`}
         width={520}
         height={312}
         sizes="(min-width: 768px) 360px, 100vw"
@@ -38,20 +31,18 @@ const accent: Accent = project.accent ?? "coral";
     <div class:list={[size === "compact" ? "p-4" : "p-5"]}>
       <div class="flex items-baseline justify-between gap-3">
         <h3 class={`font-display text-xl md:text-2xl leading-tight transition-colors group-hover:text-[color:var(--color-pastel-${accent}-deep)]`}>
-          {project.title}
+          {title}
         </h3>
-        {project.year && (
-          <span class="font-hand text-base text-[color:var(--color-ink-muted)] shrink-0">
-            {project.year}
-          </span>
-        )}
+        <span class="font-hand text-base text-[color:var(--color-ink-muted)] shrink-0">
+          {year}
+        </span>
       </div>
 
-      <p class="mt-2 text-sm leading-relaxed">{project.summary}</p>
+      <p class="mt-2 text-sm leading-relaxed">{summary}</p>
 
-      {project.tags?.length ? (
-        <ul class="mt-3 flex flex-wrap gap-1.5">
-          {project.tags.map((tag) => (
+      {tags?.length ? (
+        <ul class="mt-3 flex flex-wrap gap-1.5 list-none p-0">
+          {tags.map((tag) => (
             <li class:list={["chip", chipClass(accent)]}>{tag}</li>
           ))}
         </ul>

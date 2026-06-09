@@ -1,0 +1,48 @@
+---
+title: Oasis Portfolio
+summary: This site — pastel accents, View Transitions, and self-contained MDX posts.
+tags: ["Astro", "Tailwind v4", "MDX"]
+thumbnail: projects/oasis-portfolio/thumbnail
+featured: true
+accent: coral
+publishedAt: 2026-04-30
+links:
+  github: https://github.com/ShyamRaval/ShyamRaval.github.io
+---
+
+This portfolio is the project. It started as a question: *what would a
+personal site look like if every element had to earn its place?* No
+hero buttons begging for clicks, no three-card "values" row, no generic
+footer site-map. Just the work, a quiet voice, and one genuinely
+delightful way to get around.
+
+## The idea
+
+I wanted the site to feel like a **real object** rather than a web page —
+something with the warmth of paper, ink, and a vintage handheld device.
+The result is a white canvas with soft pastel accents, a tri-font
+typographic system, and navigation that lives where your thumb actually
+rests on a phone.
+
+## What makes it tick
+
+- **Astro + islands** so the page ships almost no JavaScript by default.
+- **View Transitions** for instant, no-reload navigation between pages.
+- **Folder-per-entry MDX** content collections — each post is a portable
+  little folder that holds only text.
+- A single `<Media />` component as the only image entry point, so
+  switching to a CDN later is a one-file change.
+
+## The Navigator
+
+The centrepiece is the Navigator — a tiny iPod-style device with a
+screen and a click-wheel. Spin the wheel and the list of destinations
+slides under a fixed highlight band, exactly like an Etch-A-Sketch
+pointer. It's the same component on desktop and mobile, just tucked into
+different corners.
+
+> Every interaction on the device is RAF-batched so it feels like real
+> hardware, not a fragile demo.
+
+There's more written up in the blog — including why the wheel rotation is
+unbounded and how the boundary "tug" feedback works.

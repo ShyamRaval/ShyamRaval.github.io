@@ -30,8 +30,8 @@ const shape = ICONS[name];
 const a11y = decorative
   ? { "aria-hidden": "true" as const }
   : title
-    ? { role: "img", "aria-label": title }
-    : { role: "img" };
+    ? { role: "img" as const, "aria-label": title }
+    : { role: "img" as const };
 ---
 {shape.style === "text" ? (
   <span class:list={[className]} {...a11y}>{text ?? ""}</span>

@@ -1,0 +1,64 @@
+---
+/**
+ * BlogPostLayout — reading chrome around rendered MDX.
+ *
+ * The page (`blog/[slug].astro`) renders the MDX body into the default
+ * slot; this layout supplies the title, date, tags, optional cover,
+ * and a quiet return path.
+ */
+import type { CollectionEntry } from "astro:content";
+import BaseLayout from "./BaseLayout.astro";
+import Media from "../components/Media.astro";
+import { type Accent, chipClass } from "../lib/accents";
+import { coverId, formatDate } from "../lib/content";
+
+interface Props {
+  entry: CollectionEntry<"blog">;
+}
+
+const { entry } = Astro.props;
+const { title, description, tags } = entry.data;
+const accent: Accent = entry.data.accent ?? "lavender";
+const date = formatDate(entry.data.publishedAt);
+---
+<BaseLayout title={title} description={description}>
+  <article class="container-prose section">
+    <a href="/blog" class="font-hand text-lg ink-lavender link-underline">
+      &larr; back to writing
+    </a>
+
+    <header class="mt-5">
+      <p class="font-hand text-xl ink-mint">{date}</p>
+      <h1 class="mt-1">{title}</h1>
+      <p class="mt-4 text-lg text-[color:var(--color-ink-soft)] leading-relaxed">
+        {description}
+      </p>
+
+      {tags?.length ? (
+        <ul class="mt-4 flex flex-wrap gap-1.5 list-none p-0">
+          {tags.map((tag) => (
+            <li class:list={["chip", chipClass(accent)]}>{tag}</li>
+          ))}
+        </ul>
+      ) : null}
+    </header>
+
+    {entry.data.cover && (
+      <figure class="mt-8 mb-2 overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-edge)]">
+        <Media
+          id={coverId(entry)}
+          alt={`${title} — cover`}
+          width={896}
+          height={504}
+          loading="eager"
+          sizes="(min-width: 768px) 768px, 100vw"
+          class="block w-full object-cover"
+        />
+      </figure>
+    )}
+
+    <div class="prose mt-8">
+      <slot />
+    </div>
+  </article>
+</BaseLayout>

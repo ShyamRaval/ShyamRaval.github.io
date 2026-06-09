@@ -1,0 +1,37 @@
+---
+title: Color Companion
+summary: A pastel-friendly palette generator that nudges designers toward accessible combinations.
+tags: ["TypeScript", "Design Tools"]
+thumbnail: projects/color-companion/thumbnail
+featured: true
+accent: sky
+publishedAt: 2025-11-12
+links:
+  live: https://example.com/color-companion
+---
+
+Color Companion is a small tool for building pastel palettes that still
+pass contrast checks. It came out of a frustration: the soft, washed-out
+colors I love are exactly the ones that quietly fail accessibility.
+
+## The problem
+
+Pastels live in a narrow band of the color space. Pick two that feel
+harmonious and there's a good chance the contrast ratio between them is
+nowhere near the WCAG threshold. Most palette tools either ignore
+contrast entirely or throw away anything soft.
+
+## The approach
+
+Color Companion treats accessibility as a **nudge, not a gate**. You pick
+a base hue, and it suggests neighbouring tones — but every swatch carries
+its live contrast score against the surfaces you'll actually use it on.
+When a pairing fails, it proposes the *smallest* adjustment that would
+make it pass, so the palette keeps its character.
+
+- Built in **TypeScript**, framework-free, runs entirely in the browser.
+- Works in OKLab so perceptual lightness steps are even.
+- Exports straight to CSS custom properties.
+
+The accent system on *this very site* was tuned with an early version of
+it.

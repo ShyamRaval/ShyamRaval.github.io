@@ -1,7 +1,7 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 /* ============================================================
- * Design tokens — soft pastel accents on a quiet white canvas.
+ * Design tokens â€” soft pastel accents on a quiet white canvas.
  * Tri-font typography: display serif + body sans + handwritten accent.
  * Gradients live only in text and small chrome (never full-page washes).
  * ============================================================ */
@@ -35,7 +35,7 @@
   --color-pastel-rose: #ffd1ea;
   --color-pastel-rose-deep: #d35aa3;
 
-  /* Spacing — tighter than v1 to support compact editorial layouts */
+  /* Spacing â€” tighter than v1 to support compact editorial layouts */
   --spacing-section: 3rem;
   --spacing-section-lg: 5rem;
   --spacing-gutter: 1.25rem;
@@ -45,9 +45,9 @@
   --radius-card: 0.875rem;
   --radius-pill: 9999px;
 
-  /* Shadows — barely-there, never harsh */
+  /* Shadows â€” barely-there, never harsh */
   --shadow-soft: 0 6px 18px -10px rgba(40, 30, 80, 0.18);
-  --shadow-dock: 0 12px 28px -16px rgba(40, 30, 80, 0.28), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  --shadow-nav: 0 12px 28px -16px rgba(40, 30, 80, 0.28), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
 
   /* Typography — tri-font system */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -87,6 +87,11 @@
     scroll-behavior: smooth;
     background-color: var(--color-surface);
     color: var(--color-ink);
+    /* Always reserve the scrollbar's space so centered content sits in
+     * the same place on pages that scroll and pages that don't — no
+     * sideways jump between routes. No-ops on overlay-scrollbar systems
+     * (macOS / mobile), where there's nothing to reserve. */
+    scrollbar-gutter: stable;
   }
 
 body {
@@ -96,14 +101,15 @@ body {
     min-height: 100svh;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* The Pocket Player lives in the bottom-left corner on desktop
-     * and bottom-centre on mobile; either way it's only as wide as
-     * the device itself, so we don't reserve a full-width strip.
-     * A small breathing margin keeps content from kissing the edge. */
-    padding-bottom: 1.5rem;
+    /* The Navigator sits bottom-CENTRE in portrait and bottom-LEFT in
+     * landscape/square (see the Navigator's orientation rules below).
+     * Portrait needs clearance for the centred puck at the bottom edge;
+     * landscape only needs a small breathing margin since the puck
+     * tucks into the corner clear of centred content. */
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
   }
-  @media (hover: none) and (pointer: coarse) {
-    body { padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)); }
+  @media (min-aspect-ratio: 1/1) {
+    body { padding-bottom: 1.5rem; }
   }
 
   h1, h2, h3, h4 {
@@ -140,7 +146,7 @@ body {
 }
 
 /* ============================================================
- * Utility patterns — small, composable, intentionally few
+ * Utility patterns â€” small, composable, intentionally few
  * ============================================================ */
 @layer utilities {
   .container-page {
@@ -162,7 +168,7 @@ body {
   .font-body    { font-family: var(--font-sans); }
   .font-hand    { font-family: var(--font-hand); }
 
-  /* Gradient text — the only place gradients appear by default */
+  /* Gradient text â€” the only place gradients appear by default */
   .text-gradient {
     background: linear-gradient(
       100deg,
@@ -176,7 +182,7 @@ body {
     color: transparent;
   }
 
-  /* Handwritten color helpers — small intentional dabs of pastel */
+  /* Handwritten color helpers â€” small intentional dabs of pastel */
   .ink-coral    { color: var(--color-pastel-coral-deep); }
   .ink-sky      { color: var(--color-pastel-sky-deep); }
   .ink-mint     { color: var(--color-pastel-mint-deep); }
@@ -184,7 +190,7 @@ body {
   .ink-lavender { color: var(--color-pastel-lavender-deep); }
   .ink-rose     { color: var(--color-pastel-rose-deep); }
 
-  /* Pill chips for tags / tools — small and uniform */
+  /* Pill chips for tags / tools â€” small and uniform */
   .chip {
     display: inline-flex;
     align-items: center;
@@ -205,7 +211,7 @@ body {
   .chip-lavender { background-color: color-mix(in oklab, var(--color-pastel-lavender) 55%, white); border-color: color-mix(in oklab, var(--color-pastel-lavender-deep) 30%, transparent); }
   .chip-rose     { background-color: color-mix(in oklab, var(--color-pastel-rose)     55%, white); border-color: color-mix(in oklab, var(--color-pastel-rose-deep)     30%, transparent); }
 
-  /* Editorial card — a quiet container; no gradient chrome */
+  /* Editorial card â€” a quiet container; no gradient chrome */
   .card-quiet {
     background-color: var(--color-surface);
     border: 1px solid var(--color-edge);
@@ -224,7 +230,7 @@ body {
   .section { padding-block: var(--spacing-section); }
   .section-lg { padding-block: var(--spacing-section-lg); }
 
-  /* In-text underline that grows on hover — quiet link affordance */
+  /* In-text underline that grows on hover â€” quiet link affordance */
   .link-underline {
     background-image: linear-gradient(currentColor, currentColor);
     background-size: 0% 1px;
@@ -233,6 +239,78 @@ body {
     transition: background-size var(--motion-duration-base) var(--motion-ease-out);
   }
   .link-underline:hover { background-size: 100% 1px; }
+
+  /* ============================================================
+   * Long-form article body â€” rendered MDX for blog posts +
+   * case studies. Calm and readable: comfortable measure,
+   * generous leading, pastel-accented links. Prose is for
+   * reading, so no handwritten font here.
+   * ============================================================ */
+  .prose { color: var(--color-ink-soft); font-size: 1.02rem; line-height: 1.75; }
+  .prose > * + * { margin-top: 1.15rem; }
+  .prose h2 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    font-size: clamp(1.6rem, 1.4vw + 1rem, 2rem);
+    margin-top: 2.4rem;
+  }
+  .prose h3 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    margin-top: 1.8rem;
+  }
+  .prose h2 + *, .prose h3 + * { margin-top: 0.7rem; }
+  .prose a {
+    color: var(--color-pastel-lavender-deep);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+  }
+  .prose a:hover { color: var(--color-pastel-coral-deep); }
+  .prose strong { color: var(--color-ink); font-weight: 600; }
+  .prose em { font-style: italic; }
+  .prose ul, .prose ol { padding-left: 1.4rem; }
+  .prose ul { list-style: disc; }
+  .prose ol { list-style: decimal; }
+  .prose li { color: var(--color-ink-soft); }
+  .prose li + li { margin-top: 0.4rem; }
+  .prose blockquote {
+    border-left: 3px solid var(--color-edge-strong);
+    padding-left: 1rem;
+    color: var(--color-ink-muted);
+    font-style: italic;
+  }
+  .prose code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-edge);
+    border-radius: 0.35rem;
+    padding: 0.1rem 0.35rem;
+  }
+  .prose pre {
+    background: var(--color-ink);
+    color: #f3f0ff;
+    border-radius: var(--radius-card);
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+  }
+  .prose pre code {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font-size: 0.85em;
+    color: inherit;
+  }
+  .prose img { border-radius: var(--radius-card); }
+  .prose figure { margin-block: 1.6rem; }
+  .prose figcaption {
+    font-family: var(--font-hand);
+    color: var(--color-ink-muted);
+    text-align: center;
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
 
   /* Editorial two-column row (collapses to single column on mobile) */
   .row-editorial {
@@ -266,7 +344,7 @@ body {
   .reveal-stagger > *:nth-child(n+7) { animation-delay: 460ms; }
 
   /* ============================================================
-   * Paper tab — notebook-style nav tabs that "stick out" of the header.
+   * Paper tab â€” notebook-style nav tabs that "stick out" of the header.
    * Active tab is pulled forward (white fill, no bottom border).
    * ============================================================ */
   .tab {
@@ -298,41 +376,46 @@ body {
   }
 
   /* ============================================================
-   * Pocket Player — the only navigation surface on the site.
+   * Navigator â€” the only navigation surface on the site.
    *
-   * One device, two ergonomic positions:
-   *   - Desktop:  tucked into the bottom-LEFT corner (out of the way
-   *               of centred long-form content). Hover/focus pulls
-   *               it out of the "pocket" into full reach.
-   *   - Mobile:   monogram puck pinned to bottom-CENTRE. Tap raises
-   *               the device with a dim backdrop behind it.
+   * Position is orientation-based; interaction is capability-based:
+   *   - Landscape / square (width >= height): bottom-LEFT tuck, out of
+   *     the way of centred long-form content.
+   *   - Portrait (incl. portrait desktop): bottom-CENTRE for thumb
+   *     reach.
+   *   - Fine pointer hovers to open; touch taps + dims a backdrop.
    *
    * Performance contract during gesture:
-   *   Only TWO elements transform per frame —
-   *     1. `.dock-player-wheel-arc`     (transform: rotate)
-   *     2. `.dock-player-screen-list`   (transform: translateY)
+   *   Only TWO elements transform per frame â€”
+   *     1. `.nav-wheel-arc`     (transform: rotate)
+   *     2. `.nav-screen-list`   (transform: translateY)
    *   Items themselves carry no per-item transforms / shadows /
    *   gradients that change during gesture. Heavy decorative effects
    *   (the wheel's inner ring) are dropped under `.is-dragging`.
    * ============================================================ */
 
-  /* === Shell — invisible positioning context. Holds the puck, the
+  /* === Shell â€” invisible positioning context. Holds the puck, the
    * dim backdrop (mobile only), and the player stage. Position is
    * viewport-aware: bottom-left on desktop, bottom-centre on mobile.
    *
    * `pointer-events: none` on the shell + `auto` on each child means
-   * the shell carries no hit area of its own — only the visible
+   * the shell carries no hit area of its own â€” only the visible
    * puck (when closed) and the visible device (when open) are
    * interactive. No invisible dead zone in the corner that blocks
    * clicks behind it. */
-  .dock-shell {
+  .nav-shell {
     position: fixed;
-    left: 1rem;
-    bottom: 1rem;
+    /* Position is orientation-based: portrait (incl. portrait desktop)
+     * gets the bottom-CENTRE thumb position by default; landscape and
+     * square viewports override to the bottom-LEFT tuck further down
+     * (see `@media (min-aspect-ratio: 1/1)`). */
+    left: 50%;
+    bottom: env(safe-area-inset-bottom, 0px);
+    transform: translateX(-50%);
     z-index: 40;
     pointer-events: none;
 
-    /* LCD palette — scoped to the dock so both the device's main
+    /* LCD palette â€” scoped to the Navigator so both the device's main
      * screen and the puck's tiny screen share it. Vintage handheld
      * tone (Game Boy / Tamagotchi / iPod-mono): warm green-grey
      * gradient, dark olive ink. The LCD's job is to read as a
@@ -348,20 +431,21 @@ body {
     --lcd-highlight-bottom: rgba(255, 248, 220, 0.30);
     --lcd-highlight-border: rgba(111, 120, 72, 0.7);
   }
-  .dock-shell > * {
+  .nav-shell > * {
     pointer-events: auto;
   }
 
-  /* === Resting puck — colourful mini iPod ===
+  /* === Resting puck â€” colourful mini iPod ===
    * The puck attracts attention through *colour* + a subtle resting
    * wiggle, not through copy. The body carries a warm pastel
-   * gradient (coral → lavender) with a soft coloured halo behind
-   * it; the wiggle runs at rest, pauses on hover. Opening the dock
-   * scales this same silhouette up into the full Pocket Player. */
-  .dock-puck {
+   * gradient (coral â†’ lavender) with a soft coloured halo behind
+   * it; the wiggle runs at rest, pauses on hover. Opening the Navigator
+   * scales this same silhouette up into the full Navigator. */
+  .nav-puck {
     position: absolute;
-    left: 0;
+    left: 50%;
     bottom: 0;
+    transform: translateX(-50%);
     z-index: 3;
     width: 3.4rem;
     height: 4.6rem;
@@ -374,15 +458,15 @@ body {
       opacity 220ms var(--motion-ease-out),
       transform 320ms var(--motion-ease-spring);
   }
-  .dock-puck:focus-visible {
+  .nav-puck:focus-visible {
     outline: 2px solid var(--color-pastel-lavender-deep);
     outline-offset: 4px;
     border-radius: 0.7rem;
   }
 
-  /* The iPod body — sized + tilted; the wiggle animation lives here
+  /* The iPod body â€” sized + tilted; the wiggle animation lives here
    * (not on the button itself) so focus outlines stay still. */
-  .dock-puck-body {
+  .nav-puck-body {
     position: absolute;
     inset: 0;
     border-radius: 0.7rem;
@@ -408,15 +492,15 @@ body {
     justify-content: space-between;
     padding: 0.5rem 0.45rem 0.55rem;
     transform-origin: 50% 100%;
-    /* Wiggle only when the puck is visible (dock closed). When the
-     * player is open the puck is hidden — no point animating it. */
+    /* Wiggle only when the puck is visible (Navigator closed). When the
+     * player is open the puck is hidden â€” no point animating it. */
     animation: puck-wiggle 3.2s var(--motion-ease-out) infinite;
   }
-  .dock-shell[data-state="open"] .dock-puck-body {
+  .nav-shell[data-state="open"] .nav-puck-body {
     animation: none;
   }
-  .dock-puck:hover .dock-puck-body,
-  .dock-puck:focus-visible .dock-puck-body {
+  .nav-puck:hover .nav-puck-body,
+  .nav-puck:focus-visible .nav-puck-body {
     animation-play-state: paused;
     transform: rotate(-2deg) translateY(-3px);
     box-shadow:
@@ -425,7 +509,7 @@ body {
       0 14px 30px color-mix(in oklab, var(--color-pastel-coral-deep) 45%, transparent),
       0 6px 14px rgba(20, 18, 30, 0.14);
   }
-  /* Subtle resting wiggle — only ±1.5° so it reads as "alive, not
+  /* Subtle resting wiggle â€” only Â±1.5Â° so it reads as "alive, not
    * shaking". transform-origin: bottom so it pivots from where it
    * sits on the desk. */
   @keyframes puck-wiggle {
@@ -433,13 +517,13 @@ body {
     50%      { transform: rotate(-3.5deg); }
   }
   @media (prefers-reduced-motion: reduce) {
-    .dock-puck-body { animation: none; transform: rotate(-4deg); }
+    .nav-puck-body { animation: none; transform: rotate(-4deg); }
   }
 
-  /* Tiny LCD screen on the puck body — same vintage green-grey as
+  /* Tiny LCD screen on the puck body â€” same vintage green-grey as
    * the device's main screen, so the puck literally previews what
    * the open device looks like. */
-  .dock-puck-screen {
+  .nav-puck-screen {
     width: 100%;
     height: 1rem;
     border-radius: 0.25rem;
@@ -452,7 +536,7 @@ body {
   }
 
   /* Tiny click-wheel on the puck body. */
-  .dock-puck-wheel {
+  .nav-puck-wheel {
     width: 2rem;
     height: 2rem;
     border-radius: 999px;
@@ -466,7 +550,7 @@ body {
     justify-content: center;
     flex-shrink: 0;
   }
-  .dock-puck-monogram {
+  .nav-puck-monogram {
     font-family: var(--font-display);
     font-style: italic;
     font-weight: 500;
@@ -476,21 +560,21 @@ body {
     transform: translateY(-0.04em);
   }
 
-  /* === Backdrop — mobile only. Hidden via display:none on desktop. === */
-  .dock-player-backdrop {
+  /* === Backdrop â€” mobile only. Hidden via display:none on desktop. === */
+  .nav-backdrop {
     display: none;
   }
 
-  /* === Player stage — outer mount that translates in/out ===
+  /* === Player stage â€” outer mount that translates in/out ===
    * On desktop, anchored above the puck (bottom-left). The stage
-   * starts "tucked" — translated DOWN past the viewport edge so only
+   * starts "tucked" â€” translated DOWN past the viewport edge so only
    * a hint of the device peeks out. Hover/focus on the shell pulls
    * it up into reach. On mobile, anchored bottom-centre with a
    * different tuck transform. */
-  .dock-player-stage {
-    position: absolute;
-    left: 0;
-    bottom: 0;
+  .nav-stage {
+    position: fixed;
+    left: 50%;
+    bottom: calc(0.9rem + env(safe-area-inset-bottom, 0px));
     z-index: 2;
     display: flex;
     flex-direction: column;
@@ -498,30 +582,30 @@ body {
     gap: 0.45rem;
     pointer-events: none;
     opacity: 0;
-    transform: translateY(8%);
+    transform: translate(-50%, 14%);
     transition:
       opacity 220ms var(--motion-ease-out),
       transform 380ms var(--motion-ease-spring);
   }
-  /* Open — `data-state` is the single source of truth, set by the
+  /* Open â€” `data-state` is the single source of truth, set by the
    * controller (touch tap, desktop hover-with-grace, focus-within,
    * keyboard activation). CSS reacts only to that flag. */
-  .dock-shell[data-state="open"] .dock-player-stage {
+  .nav-shell[data-state="open"] .nav-stage {
     opacity: 1;
     pointer-events: auto;
-    transform: translateY(0);
+    transform: translate(-50%, 0);
   }
-  .dock-shell[data-state="open"] .dock-puck {
+  .nav-shell[data-state="open"] .nav-puck {
     opacity: 0;
     pointer-events: none;
-    transform: translateY(20%) scale(0.85);
+    transform: translateX(-50%) translateY(20%) scale(0.85);
   }
 
   /* === Device shell ===
    * Cream paper-plastic body. Slight tilt so it reads as "set down
    * on the desk" rather than "rendered into a frame". */
-  .dock-player {
-    width: 17.5rem;
+  .nav-player {
+    width: clamp(15rem, 90vw, 18rem);
     background: linear-gradient(180deg, #fbfaf6 0%, #f0ede3 100%);
     border: 1px solid var(--color-edge-strong);
     border-radius: 1.4rem;
@@ -536,16 +620,16 @@ body {
     transform: rotate(-0.4deg);
   }
 
-  /* === The screen — vintage LCD ===
+  /* === The screen â€” vintage LCD ===
    * A real digital display sitting in the cream device body. Warm
    * green-grey backlit gradient with a subtle pixel-grid pattern
    * (the dot raster is part of the screen's background, so it
-   * shows everywhere — including faintly through the highlight
-   * band — but never on top of the icons themselves). Recessed
+   * shows everywhere â€” including faintly through the highlight
+   * band â€” but never on top of the icons themselves). Recessed
    * with an inner shadow + olive bezel border, lifted by a single
    * pixel of cream rim above so the body reads as cream paper and
    * the screen reads as glass. */
-  .dock-player-screen {
+  .nav-screen {
     position: relative;
     background:
       radial-gradient(circle, var(--lcd-pixel) 0.6px, transparent 1.1px) 0 0 / 3px 3px,
@@ -560,20 +644,20 @@ body {
     display: flex;
     flex-direction: column;
   }
-  .dock-player-screen-frame {
+  .nav-screen-frame {
     position: relative;
     height: 4.2rem;
     overflow: hidden;
   }
 
-  /* Highlight band — vertical, fixed at the centre of the frame.
+  /* Highlight band â€” vertical, fixed at the centre of the frame.
    * Rows slide underneath it as the wheel spins (Etch-A-Sketch
-   * pointer model — only with the pointer fixed, and the world
+   * pointer model â€” only with the pointer fixed, and the world
    * moving past). */
-  /* Highlight band — a faint warm-tinted rectangle inside the LCD
+  /* Highlight band â€” a faint warm-tinted rectangle inside the LCD
    * (the "lit" pixel cluster under the cursor), olive dashed bezel
    * so it visually belongs to the LCD palette. */
-  .dock-player-screen-highlight {
+  .nav-screen-highlight {
     position: absolute;
     top: 0.4rem;
     bottom: 0.4rem;
@@ -591,7 +675,7 @@ body {
     z-index: 0;
   }
 
-  .dock-player-screen-list {
+  .nav-screen-list {
     position: relative;
     z-index: 1;
     height: 100%;
@@ -599,28 +683,28 @@ body {
     flex-direction: row;
     align-items: stretch;
     padding: 0;
-    transform: translateX(var(--dock-list-x, 0px));
+    transform: translateX(var(--nav-list-x, 0px));
   }
-  /* Promote to its own layer only while the list is moving — permanent
+  /* Promote to its own layer only while the list is moving â€” permanent
    * will-change on a fixed element costs GPU memory and compositor
-   * work on every page frame even when the dock is closed. */
-  .dock-player-screen-list.is-dragging,
-  .dock-player-screen-list.is-snapping {
+   * work on every page frame even when the Navigator is closed. */
+  .nav-screen-list.is-dragging,
+  .nav-screen-list.is-snapping {
     will-change: transform;
   }
-  .dock-player-screen-list.is-snapping {
+  .nav-screen-list.is-snapping {
     transition: transform 380ms var(--motion-ease-spring);
   }
-  .dock-player-screen-list.is-dragging {
+  .nav-screen-list.is-dragging {
     transition: none;
   }
 
-  /* Section dividers — short handwritten captions between the nav
+  /* Section dividers â€” short handwritten captions between the nav
    * and socials groups, set in the LCD's faint ink. Flows as plain
    * horizontal text so it reads from the front (the previous
    * vertical-rl + rotate version forced a head-tilt). The dashed
    * olive borders still do the visual work of separating groups. */
-  .dock-player-section {
+  .nav-section {
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -635,13 +719,13 @@ body {
     margin: 0 0.3rem;
   }
 
-  /* Row cells — every cell rendered in LCD ink so they read as
+  /* Row cells â€” every cell rendered in LCD ink so they read as
    * pixels on a screen, not pastel chrome. Brand colours are
-   * deliberately NOT applied here — the LCD enforces its own
+   * deliberately NOT applied here â€” the LCD enforces its own
    * monochrome scheme (faithful to vintage handheld devices, and
    * resolves the "interactive vs information element" ambiguity
    * the user reported). */
-  .dock-player-row {
+  .nav-row {
     flex-shrink: 0;
     width: 3.6rem;
     height: 100%;
@@ -656,7 +740,7 @@ body {
       transform 280ms var(--motion-ease-spring),
       opacity 200ms var(--motion-ease-out);
   }
-  .dock-player-row-icon {
+  .nav-row-icon {
     width: 1.6rem;
     height: 1.6rem;
     display: inline-flex;
@@ -665,11 +749,11 @@ body {
     flex-shrink: 0;
     transition: transform 280ms var(--motion-ease-spring);
   }
-  .dock-player-row-icon svg {
+  .nav-row-icon svg {
     width: 100%;
     height: 100%;
   }
-  .dock-player-row-monogram {
+  .nav-row-monogram {
     font-family: var(--font-display);
     font-style: italic;
     font-weight: 500;
@@ -677,22 +761,22 @@ body {
     line-height: 1;
     transform: translateY(-0.04em);
   }
-  .dock-player-row:focus-visible {
+  .nav-row:focus-visible {
     outline: 2px solid var(--color-pastel-lavender-deep);
     outline-offset: -3px;
     border-radius: 0.45rem;
   }
 
-  /* Active cell — full LCD ink + scale-up. Differentiation is via
+  /* Active cell â€” full LCD ink + scale-up. Differentiation is via
    * scale + ink contrast, not colour. */
-  .dock-player-row.is-active { color: var(--lcd-ink); }
-  .dock-player-row.is-active .dock-player-row-icon {
+  .nav-row.is-active { color: var(--lcd-ink); }
+  .nav-row.is-active .nav-row-icon {
     transform: scale(1.18);
   }
 
-  /* Screen meta — sits inside the LCD bezel, dashed olive divider
+  /* Screen meta â€” sits inside the LCD bezel, dashed olive divider
    * marks it off as a separate "field" of the screen. */
-  .dock-player-screen-meta {
+  .nav-screen-meta {
     border-top: 1px dashed var(--lcd-border);
     padding: 0.45rem 0.85rem 0.55rem;
     display: flex;
@@ -701,14 +785,14 @@ body {
     gap: 0.1rem;
     background: rgba(20, 30, 18, 0.06);
   }
-  .dock-player-screen-handle {
+  .nav-screen-handle {
     font-family: var(--font-display);
     font-style: italic;
     font-size: 1.4rem;
     line-height: 1;
     color: var(--lcd-ink);
   }
-  .dock-player-screen-note {
+  .nav-screen-note {
     font-family: var(--font-hand);
     font-size: 1rem;
     line-height: 1.1;
@@ -717,16 +801,16 @@ body {
   }
 
   /* === The wheel ===
-   * Pure controller — carries no items. The arc is the only thing
+   * Pure controller â€” carries no items. The arc is the only thing
    * that rotates. Compass labels are real `<button>`s with actions
-   * (menu = close, ◂◂ = prev, ▸▸ = next, play = activate). The wheel
-   * is intentionally large — it's the device's physical control. */
-  .dock-player-wheel-mount {
+   * (menu = close, â—‚â—‚ = prev, â–¸â–¸ = next, play = activate). The wheel
+   * is intentionally large â€” it's the device's physical control. */
+  .nav-wheel-mount {
     display: flex;
     justify-content: center;
     padding: 0.2rem 0 0;
   }
-  .dock-player-wheel {
+  .nav-wheel {
     --wheel-size: 12.4rem;
     position: relative;
     width: var(--wheel-size);
@@ -742,8 +826,8 @@ body {
     -webkit-tap-highlight-color: transparent;
     cursor: grab;
   }
-  .dock-player-wheel.is-dragging { cursor: grabbing; }
-  .dock-player-wheel::before {
+  .nav-wheel.is-dragging { cursor: grabbing; }
+  .nav-wheel::before {
     content: "";
     position: absolute;
     top: 50%;
@@ -755,15 +839,15 @@ body {
     border: 1px dashed rgba(20, 18, 30, 0.08);
     pointer-events: none;
   }
-  .dock-player-wheel.is-dragging::before { display: none; }
+  .nav-wheel.is-dragging::before { display: none; }
 
-  /* Arc — the only rotating layer. Tick marks etched around the rim. */
-  .dock-player-wheel-arc {
+  /* Arc â€” the only rotating layer. Tick marks etched around the rim. */
+  .nav-wheel-arc {
     position: absolute;
     inset: 0.45rem;
     border-radius: 999px;
     pointer-events: none;
-    transform: rotate(var(--dock-wheel-rot, 0deg));
+    transform: rotate(var(--nav-wheel-rot, 0deg));
     background:
       conic-gradient(
         from 0deg,
@@ -781,15 +865,15 @@ body {
     mask: radial-gradient(circle at 50% 50%, transparent 0 60%, #000 62%, #000 100%);
     -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0 60%, #000 62%, #000 100%);
   }
-  .dock-player-wheel.is-dragging .dock-player-wheel-arc {
+  .nav-wheel.is-dragging .nav-wheel-arc {
     will-change: transform;
   }
 
-  /* Compass cap buttons — `menu` / forward / `play` / back.
+  /* Compass cap buttons â€” `menu` / forward / `play` / back.
    * `touch-action: none` matches the wheel surface itself so a
    * touch that starts on a cap can be promoted to a wheel rotation
    * without the browser hijacking it as a button-press / scroll. */
-  .dock-player-wheel-cap {
+  .nav-wheel-cap {
     position: absolute;
     z-index: 3;
     padding: 0.3rem 0.55rem;
@@ -806,39 +890,39 @@ body {
     border-radius: 0.4rem;
     transition: color 180ms var(--motion-ease-out);
   }
-  .dock-player-wheel-cap:hover,
-  .dock-player-wheel-cap:focus-visible {
+  .nav-wheel-cap:hover,
+  .nav-wheel-cap:focus-visible {
     color: var(--color-ink);
   }
-  .dock-player-wheel-cap:focus-visible {
+  .nav-wheel-cap:focus-visible {
     outline: 1.5px solid var(--color-pastel-lavender-deep);
     outline-offset: 2px;
   }
-  .dock-player-wheel-cap[data-pos="up"]    { top: 0.35rem;     left: 50%;       transform: translateX(-50%); }
-  .dock-player-wheel-cap[data-pos="down"]  { bottom: 0.35rem;  left: 50%;       transform: translateX(-50%); }
-  .dock-player-wheel-cap[data-pos="left"]  { left: 0.55rem;    top: 50%;        transform: translateY(-50%); }
-  .dock-player-wheel-cap[data-pos="right"] { right: 0.55rem;   top: 50%;        transform: translateY(-50%); }
+  .nav-wheel-cap[data-pos="up"]    { top: 0.35rem;     left: 50%;       transform: translateX(-50%); }
+  .nav-wheel-cap[data-pos="down"]  { bottom: 0.35rem;  left: 50%;       transform: translateX(-50%); }
+  .nav-wheel-cap[data-pos="left"]  { left: 0.55rem;    top: 50%;        transform: translateY(-50%); }
+  .nav-wheel-cap[data-pos="right"] { right: 0.55rem;   top: 50%;        transform: translateY(-50%); }
 
-  /* Icon caps (prev / next) — square padding + a fixed-size SVG
+  /* Icon caps (prev / next) â€” square padding + a fixed-size SVG
    * so the transport glyphs sit neatly against the wheel rim and
    * mirror each other exactly. Distinct class (not just :has(svg))
    * for older browser support and IDE-greppable styling. */
-  .dock-player-wheel-cap--icon {
+  .nav-wheel-cap--icon {
     padding: 0.4rem;
     line-height: 0;
   }
-  .dock-player-wheel-cap--icon svg {
+  .nav-wheel-cap--icon svg {
     width: 0.85rem;
     height: 0.85rem;
     display: block;
   }
 
-  /* Centre button — confirm the highlighted item.
+  /* Centre button â€” confirm the highlighted item.
    * `touch-action: none` lets a touch that starts here flow into
    * the wheel's rotation gesture once it crosses the drag
-   * threshold (see Dock.astro `onPointerMove`). Without it, mobile
+   * threshold (see Navigator.astro `onPointerMove`). Without it, mobile
    * browsers can swallow the pointermove stream as a button press. */
-  .dock-player-wheel-center {
+  .nav-wheel-center {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -860,51 +944,55 @@ body {
     z-index: 4;
     transition: transform 200ms var(--motion-ease-spring);
   }
-  .dock-player-wheel-center:active {
+  .nav-wheel-center:active {
     transform: translate(-50%, -50%) scale(0.94);
   }
-  .dock-player-wheel-center:focus-visible {
+  .nav-wheel-center:focus-visible {
     outline: 2px solid var(--color-pastel-lavender-deep);
     outline-offset: 2px;
   }
 
   /* ============================================================
-   * Mobile overrides — touch + coarse pointer.
-   * Only positioning + backdrop differ. The device body is shared.
-   * ============================================================ */
-  @media (hover: none) and (pointer: coarse) {
-    .dock-shell {
-      left: 50%;
-      bottom: env(safe-area-inset-bottom, 0px);
-      transform: translateX(-50%);
+   * Landscape + square viewports (width >= height) -- bottom-LEFT
+   * tuck, clear of centred long-form content. Portrait keeps the
+   * base bottom-CENTRE rules above. This switch is orientation-based;
+   * the touch/backdrop treatment below stays capability-based, so the
+   * two compose independently (e.g. a landscape touch tablet gets the
+   * left tuck AND the backdrop). */
+  @media (min-aspect-ratio: 1/1) {
+    .nav-shell {
+      left: 1rem;
+      bottom: 1rem;
+      transform: none;
     }
-    /* Re-anchor children for centre alignment. */
-    .dock-puck {
+    .nav-puck {
+      left: 0;
+      transform: none;
+    }
+    .nav-shell[data-state="open"] .nav-puck {
+      transform: translateY(20%) scale(0.85);
+    }
+    .nav-stage {
       position: absolute;
-      left: 50%;
+      left: 0;
       bottom: 0;
-      transform: translateX(-50%);
+      transform: translateY(8%);
     }
-    .dock-shell[data-state="open"] .dock-puck {
-      opacity: 0;
-      pointer-events: none;
-      transform: translateX(-50%) translateY(20%) scale(0.85);
+    .nav-shell[data-state="open"] .nav-stage {
+      transform: translateY(0);
     }
-    .dock-player-stage {
-      position: fixed;
-      left: 50%;
-      bottom: calc(0.9rem + env(safe-area-inset-bottom, 0px));
-      transform: translate(-50%, 14%);
+    .nav-player {
+      width: 17.5rem;
     }
-    .dock-shell[data-state="open"] .dock-player-stage {
-      transform: translate(-50%, 0);
-    }
-    .dock-player {
-      width: clamp(15rem, 90vw, 18rem);
-    }
+  }
 
-    /* Backdrop — only shown on mobile, behind the device. */
-    .dock-player-backdrop {
+  /* Touch devices get the dim modal backdrop regardless of
+   * orientation; fine pointers (incl. portrait desktops) open on
+   * hover with no backdrop. */
+  @media (hover: none) and (pointer: coarse) {
+
+    /* Backdrop â€” only shown on mobile, behind the device. */
+    .nav-backdrop {
       display: block;
       position: fixed;
       inset: 0;
@@ -917,7 +1005,7 @@ body {
       pointer-events: none;
       transition: opacity 240ms var(--motion-ease-out);
     }
-    .dock-shell[data-state="open"] .dock-player-backdrop {
+    .nav-shell[data-state="open"] .nav-backdrop {
       opacity: 1;
       pointer-events: auto;
     }
@@ -934,8 +1022,18 @@ body {
 /* ============================================================
  * Astro View Transitions polish
  * ============================================================ */
+/* Only the page CONTENT animates between routes: `<main>` carries a
+ * `transition:animate="fade"`, which lives in its own view-transition
+ * group and crossfades on every navigation.
+ *
+ * Everything else — the persistent chrome (the Navigator, the header) —
+ * is captured in the `root` snapshot. If `root` crossfades, those
+ * persisted elements visibly dip out and back in on every page change,
+ * which reads as the device being torn down and rebuilt even though its
+ * DOM node and state are untouched. Holding the `root` snapshot static
+ * keeps all persistent chrome perfectly still while `<main>` transitions. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: var(--motion-duration-base);
-  animation-timing-function: var(--motion-ease-out);
+  animation: none;
 }
+

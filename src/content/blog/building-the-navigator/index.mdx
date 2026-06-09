@@ -1,0 +1,58 @@
+---
+title: Building the Navigator
+description: How the Navigator became a tiny iPod-style control — and the gesture model that makes it feel like real hardware.
+publishedAt: 2026-04-28
+tags: ["design", "interaction", "performance"]
+accent: lavender
+cover: blog/building-the-navigator/cover
+---
+
+The navigation on this site is a small handheld device with a screen and
+a click-wheel. You spin the wheel, the list of destinations slides past a
+fixed highlight band, and you press the centre to go. It took an
+embarrassing number of attempts to get there.
+
+## Everything that came before
+
+The Navigator went through a graveyard of ideas: an always-visible two-row
+strip (fought the content for space), a bookmark-sheet (too
+conventional), and a rotary dial where the menu items orbited on the
+spinning surface (tanked the frame rate the moment you touched it).
+
+The lesson from the rotary dial was the important one: **never put the
+data on the gesture surface.**
+
+## The split that worked
+
+The Navigator separates two concerns that the rotary dial had fused:
+
+- The **gesture surface** — the wheel. It does almost nothing; it just
+  rotates. One element, one `transform: rotate`.
+- The **data surface** — the screen. The destinations live here as plain,
+  readable text, sliding under a fixed pointer (an Etch-A-Sketch model).
+
+That separation is the whole trick. The thing your thumb touches is cheap
+to animate, and the thing your eyes read never moves *with* your thumb.
+
+## Two accumulators
+
+The wheel keeps two independent rotation values:
+
+- `wheelRotation` is **unbounded** — it drives the visible arc and spins
+  forever, even past the end of the list.
+- `listRotation` is **clamped and rubber-banded** — it drives the items,
+  so when you hit the end the list tugs back while the wheel keeps going.
+
+Each `pointermove` adds the *incremental* angle since the previous event,
+never the absolute angle from drag-start. That one detail killed the
+±180° flip-to-origin bug that plagued earlier builds.
+
+## The performance contract
+
+During any drag, only two elements may transform, and no style writes
+happen synchronously inside `pointermove` — everything is batched into a
+single `requestAnimationFrame`. The active item's label only updates when
+you cross a detent, so text mutation is naturally rate-limited.
+
+It's a lot of discipline for a navigation menu. But it's the most-touched
+thing on the site, and it had to feel like a real device — not a demo.

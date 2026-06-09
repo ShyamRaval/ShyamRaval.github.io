@@ -2,7 +2,7 @@
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import Header from "../components/Header.astro";
-import Dock from "../components/Dock.astro";
+import Navigator from "../components/Navigator.astro";
 import { site } from "../data/site";
 
 interface Props {
@@ -73,6 +73,6 @@ const canonical = new URL(Astro.url.pathname, site.url).toString();
       <slot />
     </main>
 
-    <Dock />
+    <Navigator />
   </body>
 </html>

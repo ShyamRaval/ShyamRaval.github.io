@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Section from "../../components/Section.astro";
+import BlogCard from "../../components/BlogCard.astro";
+import { getBlogPosts } from "../../lib/content";
+
+const posts = await getBlogPosts();
+---
+<BaseLayout
+  title="Blog"
+  description="Notes on design, interaction, and building calm, fast websites."
+>
+  <Section label="the writing" labelAccent="lavender" size="lg">
+    <h1 class="font-display leading-[1.05]">Notes &amp; drafts</h1>
+    <p class="mt-4 max-w-xl text-base md:text-lg text-[color:var(--color-ink-soft)] leading-relaxed">
+      Occasional writing about design, interaction, and the small details
+      that make software feel kind. No schedule &mdash; only when there&rsquo;s
+      something worth saying.
+    </p>
+
+    {posts.length ? (
+      <ul class="mt-8 grid gap-5 sm:grid-cols-2 items-start reveal-stagger list-none p-0">
+        {posts.map((entry) => (
+          <li class="self-start"><BlogCard entry={entry} /></li>
+        ))}
+      </ul>
+    ) : (
+      <p class="mt-8 font-hand text-2xl ink-coral">nothing published yet &mdash; check back soon.</p>
+    )}
+  </Section>
+</BaseLayout>

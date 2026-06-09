@@ -1,21 +1,23 @@
 ---
 /**
- * Dock — the *Pocket Player*. The single most important interactive
+ * Navigator — the single most important interactive
  * element on the site, and the only primary navigation surface on
  * any device.
  *
- * One device, two ergonomic positions:
+ * Two independent axes — position is orientation-based, interaction
+ * is input-capability-based:
  *
- *   Desktop (hover + fine pointer):
- *     Tucked into the bottom-LEFT corner like an iPod sleeping in
- *     a jeans pocket — only the top of the device peeks above the
- *     viewport edge when at rest. Hover or focus the corner and the
- *     device "pulls out" of the pocket into full reach. Stays out of
- *     the way of long-form content (which lives centred in the page).
+ *   Position (orientation):
+ *     Landscape or square viewports (width >= height) tuck the device
+ *     into the bottom-LEFT corner like an iPod sleeping in a jeans
+ *     pocket, out of the way of centred long-form content. Portrait
+ *     viewports — including a portrait desktop — put it at the
+ *     bottom-CENTRE, where the thumb rests on a tall screen.
  *
- *   Mobile (touch + coarse pointer):
- *     A small monogram puck pinned to bottom-CENTRE. Tap → the
- *     device rises with a dim backdrop behind it.
+ *   Interaction (input capability):
+ *     Fine pointers (mouse) hover or focus to "pull the device out of
+ *     the pocket". Touch surfaces tap the puck to raise it, with a dim
+ *     backdrop behind it and page scroll locked while open.
  *
  *   Both shapes share the SAME body:
  *
@@ -29,15 +31,15 @@
  *       │ ├──────────────────┤ │
  *       │ │ handle  · ~~note │ │
  *       │ └──────────────────┘ │
- *       │       ╭ menu ╮       │  cap → close
+ *       │       ╭ play ╮       │  cap-top + centre → activate,
  *       │       │ ◂ ● ▸│       │  cap-left → previous,
- *       │       ╰ play ╯       │  cap-right → next,
- *       └──────────────────────┘   cap-bottom + centre → activate
+ *       │       ╰ back ╯       │  cap-right → next,
+ *       └──────────────────────┘   cap-bottom → back one page
  *
  * Performance contract during gesture:
  *   Only TWO elements transform per frame —
- *     1. `.dock-player-wheel-arc`     (transform: rotate)
- *     2. `.dock-player-screen-list`   (transform: translateY)
+ *     1. `.nav-wheel-arc`     (transform: rotate)
+ *     2. `.nav-screen-list`   (transform: translateY)
  *   Items themselves carry no per-item transforms / shadows /
  *   gradients that change while the pointer is moving. All updates
  *   are RAF-batched. The wheel rotation is UNBOUNDED so it visibly
@@ -47,26 +49,25 @@
  *   - The `data-action` attributes on the wheel caps are already a
  *     dispatcher pattern — adding music transport (play/pause/next
  *     track) later means adding action handlers, not new markup.
- *   - The controller exposes a `dispatchEvent("dock:active", …)`
+ *   - The controller exposes a `dispatchEvent("navigator:active", …)`
  *     pattern that future audio islands can subscribe to for
  *     small UX sounds (a tick on detent crossing, a soft chime on
  *     centre-button press) without touching this file again.
  */
 import { site } from "../data/site";
-import { getDockSocials } from "../lib/dock-data";
+import { getNavigatorSocials } from "../lib/navigator-data";
 import Icon from "./Icon.astro";
 
-const socials = getDockSocials(site);
+const socials = getNavigatorSocials(site);
 
 const firstNav = site.nav[0];
 const seedHandle = firstNav?.handle ?? "";
 const seedNote = firstNav?.hand ?? "";
 ---
 <aside
-  class="dock-shell"
+  class="nav-shell"
   data-state="closed"
   transition:persist
-  transition:name="primary-dock"
   aria-label="Site navigation and contact"
 >
   {/* Puck — a colourful mini iPod silhouette. The body carries a
@@ -76,15 +77,15 @@ const seedNote = firstNav?.hand ?? "";
       colour and shape do the asking. */}
   <button
     type="button"
-    class="dock-puck"
-    aria-controls="dock-player-stage"
+    class="nav-puck"
+    aria-controls="nav-stage"
     aria-expanded="false"
     aria-label="Open menu"
   >
-    <span class="dock-puck-body" aria-hidden="true">
-      <span class="dock-puck-screen"></span>
-      <span class="dock-puck-wheel">
-        <Icon name="monogram" text={site.monogram} class="dock-puck-monogram" decorative />
+    <span class="nav-puck-body" aria-hidden="true">
+      <span class="nav-puck-screen"></span>
+      <span class="nav-puck-wheel">
+        <Icon name="monogram" text={site.monogram} class="nav-puck-monogram" decorative />
       </span>
     </span>
   </button>
@@ -93,30 +94,30 @@ const seedNote = firstNav?.hand ?? "";
       the corner, so it doesn't need a dimming layer over the page. */}
   <button
     type="button"
-    class="dock-player-backdrop"
+    class="nav-backdrop"
     aria-label="Close menu"
     tabindex="-1"
   ></button>
 
   <div
-    id="dock-player-stage"
-    class="dock-player-stage"
+    id="nav-stage"
+    class="nav-stage"
     role="dialog"
-    aria-labelledby="dock-player-title"
+    aria-labelledby="nav-player-title"
     aria-hidden="true"
     inert
   >
-    <h2 id="dock-player-title" class="sr-only">Site menu</h2>
+    <h2 id="nav-player-title" class="sr-only">Site menu</h2>
 
-    <div class="dock-player">
+    <div class="nav-player">
       {/* === Screen — items slide past a fixed highlight band === */}
-      <div class="dock-player-screen">
-        <div class="dock-player-screen-frame">
-          <span class="dock-player-screen-highlight" aria-hidden="true"></span>
+      <div class="nav-screen">
+        <div class="nav-screen-frame">
+          <span class="nav-screen-highlight" aria-hidden="true"></span>
 
-          <div class="dock-player-screen-list" role="menu">
+          <div class="nav-screen-list" role="menu">
             <span
-              class="dock-player-section font-hand"
+              class="nav-section font-hand"
               aria-hidden="true"
               data-section="nav"
             >
@@ -124,7 +125,7 @@ const seedNote = firstNav?.hand ?? "";
             </span>
             {site.nav.map((item, i) => (
               <a
-                class="dock-player-row"
+                class="nav-row"
                 href={item.href}
                 data-brand={item.label}
                 data-index={i}
@@ -133,11 +134,11 @@ const seedNote = firstNav?.hand ?? "";
                 role="menuitem"
                 aria-label={`${item.handle} — ${item.hand}`}
               >
-                <span class="dock-player-row-icon" aria-hidden="true">
+                <span class="nav-row-icon" aria-hidden="true">
                   <Icon
                     name={item.icon}
                     text={site.monogram}
-                    class={item.icon === "monogram" ? "dock-player-row-monogram" : undefined}
+                    class={item.icon === "monogram" ? "nav-row-monogram" : undefined}
                     decorative
                   />
                 </span>
@@ -145,7 +146,7 @@ const seedNote = firstNav?.hand ?? "";
             ))}
 
             <span
-              class="dock-player-section font-hand"
+              class="nav-section font-hand"
               aria-hidden="true"
               data-section="socials"
             >
@@ -153,7 +154,7 @@ const seedNote = firstNav?.hand ?? "";
             </span>
             {socials.map((entry, i) => (
               <a
-                class="dock-player-row"
+                class="nav-row"
                 href={entry.href}
                 data-brand={entry.brand}
                 data-index={site.nav.length + i}
@@ -164,7 +165,7 @@ const seedNote = firstNav?.hand ?? "";
                 rel={entry.external ? "noreferrer noopener" : undefined}
                 aria-label={`${entry.label} — ${entry.handle}`}
               >
-                <span class="dock-player-row-icon" aria-hidden="true">
+                <span class="nav-row-icon" aria-hidden="true">
                   <Icon name={entry.icon} decorative />
                 </span>
               </a>
@@ -176,28 +177,28 @@ const seedNote = firstNav?.hand ?? "";
             handwritten one-liner. The name appears here ONCE — the row
             cells in the strip above show only icons, so there's no
             duplicate text. */}
-        <div class="dock-player-screen-meta" aria-live="polite">
-          <span class="dock-player-screen-handle">{seedHandle}</span>
-          <span class="dock-player-screen-note font-hand">{seedNote}</span>
+        <div class="nav-screen-meta" aria-live="polite">
+          <span class="nav-screen-handle">{seedHandle}</span>
+          <span class="nav-screen-note font-hand">{seedNote}</span>
         </div>
       </div>
 
       {/* === Wheel — pure controller. Caps are real buttons with
           honest actions. The arc is the only thing that rotates. */}
-      <div class="dock-player-wheel-mount">
-        <div class="dock-player-wheel">
-          <span class="dock-player-wheel-arc" aria-hidden="true"></span>
+      <div class="nav-wheel-mount">
+        <div class="nav-wheel">
+          <span class="nav-wheel-arc" aria-hidden="true"></span>
 
-          <button type="button" class="dock-player-wheel-cap" data-pos="up" data-action="menu" aria-label="Close menu">menu</button>
+          <button type="button" class="nav-wheel-cap" data-pos="down" data-action="back" aria-label="Go back one page">back</button>
           {/* Skip-forward / skip-back — same transport-control vocabulary
               as every iPod / Walkman / early MP3 player. The Icon
               component owns the SVG so adding new caps in future is a
               one-line change here, not a new inline SVG. */}
-          <button type="button" class="dock-player-wheel-cap dock-player-wheel-cap--icon" data-pos="right" data-action="next" aria-label="Next item">
+          <button type="button" class="nav-wheel-cap nav-wheel-cap--icon" data-pos="right" data-action="next" aria-label="Next item">
             <Icon name="skip-forward" decorative />
           </button>
-          <button type="button" class="dock-player-wheel-cap" data-pos="down" data-action="play" aria-label="Open the highlighted item">play</button>
-          <button type="button" class="dock-player-wheel-cap dock-player-wheel-cap--icon" data-pos="left" data-action="prev" aria-label="Previous item">
+          <button type="button" class="nav-wheel-cap" data-pos="up" data-action="play" aria-label="Open the highlighted item">play</button>
+          <button type="button" class="nav-wheel-cap nav-wheel-cap--icon" data-pos="left" data-action="prev" aria-label="Previous item">
             <Icon name="skip-back" decorative />
           </button>
 
@@ -209,7 +210,7 @@ const seedNote = firstNav?.hand ?? "";
               into the "this is the confirm key" business. */}
           <button
             type="button"
-            class="dock-player-wheel-center"
+            class="nav-wheel-center"
             data-action="play"
             aria-label="Open the highlighted item"
           ></button>
@@ -221,8 +222,10 @@ const seedNote = firstNav?.hand ?? "";
 </aside>
 
 <script>
+  import { navigate } from "astro:transitions/client";
+
   /**
-   * Pocket Player controller. See the component doc-comment for the
+   * Navigator controller. See the component doc-comment for the
    * full design rationale; this comment focuses on the gesture model
    * because it is where most of the bugs were.
    *
@@ -256,14 +259,18 @@ const seedNote = firstNav?.hand ?? "";
    *   - Touchpad scroll: same `wheel` event — BOTH axes contribute,
    *                      so a two-finger horizontal swipe (left / right)
    *                      drives the wheel just like a vertical scroll.
-   *   - Keyboard:        ◂◂ / play / ▸▸ / menu cap buttons + Escape
+   *   - Keyboard:        ◂◂ / play / ▸▸ / back cap buttons + Escape
+   *
+   * The `back` cap steps one page along the visitor's own history
+   * (ClientRouter turns it into a view transition); it is NOT a menu
+   * step, so the boundary "tug" bounce never fires for it.
    *
    * Closing the player:
-   *   - Desktop: cursor leaves the device (CSS handles this).
+   *   - Desktop: hover opens it and it stays open (no hover-out close);
+   *              it minimizes only on a click outside its bounds, or Escape.
    *   - Mobile:  tap the dim backdrop, OR tap anywhere on the page
    *              outside the device (document-level click-outside
-   *              safety net), OR press Escape, OR press the wheel's
-   *              `menu` cap.
+   *              safety net), OR press Escape.
    */
   const TOUCH_DRAG_THRESHOLD = 4;
   const WHEEL_DEG_PER_STEP = 36;                     // detent every 36° on the arc
@@ -312,28 +319,28 @@ const seedNote = firstNav?.hand ?? "";
     { transform: `${prop}(0${unit})`, offset: 1, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)" },
   ];
 
-  const initDock = () => {
-    const shell = document.querySelector<HTMLElement>(".dock-shell");
+  const initNavigator = () => {
+    const shell = document.querySelector<HTMLElement>(".nav-shell");
     if (!shell) return;
-    if (shell.dataset.dockPlayerInit === "1") return;
-    shell.dataset.dockPlayerInit = "1";
+    if (shell.dataset.navigatorInit === "1") return;
+    shell.dataset.navigatorInit = "1";
 
-    const puck = shell.querySelector<HTMLButtonElement>(".dock-puck");
-    const stage = shell.querySelector<HTMLElement>(".dock-player-stage");
-    const backdrop = shell.querySelector<HTMLButtonElement>(".dock-player-backdrop");
-    const wheel = shell.querySelector<HTMLElement>(".dock-player-wheel");
-    const wheelArc = shell.querySelector<HTMLElement>(".dock-player-wheel-arc");
-    const list = shell.querySelector<HTMLElement>(".dock-player-screen-list");
-    const frame = shell.querySelector<HTMLElement>(".dock-player-screen-frame");
-    const screenHandle = shell.querySelector<HTMLElement>(".dock-player-screen-handle");
-    const screenNote = shell.querySelector<HTMLElement>(".dock-player-screen-note");
+    const puck = shell.querySelector<HTMLButtonElement>(".nav-puck");
+    const stage = shell.querySelector<HTMLElement>(".nav-stage");
+    const backdrop = shell.querySelector<HTMLButtonElement>(".nav-backdrop");
+    const wheel = shell.querySelector<HTMLElement>(".nav-wheel");
+    const wheelArc = shell.querySelector<HTMLElement>(".nav-wheel-arc");
+    const list = shell.querySelector<HTMLElement>(".nav-screen-list");
+    const frame = shell.querySelector<HTMLElement>(".nav-screen-frame");
+    const screenHandle = shell.querySelector<HTMLElement>(".nav-screen-handle");
+    const screenNote = shell.querySelector<HTMLElement>(".nav-screen-note");
     if (
       !puck || !stage || !backdrop || !wheel || !wheelArc ||
       !list || !frame || !screenHandle || !screenNote
     ) return;
 
     const rows = Array.from(
-      list.querySelectorAll<HTMLAnchorElement>(".dock-player-row")
+      list.querySelectorAll<HTMLAnchorElement>(".nav-row")
     );
     const N = rows.length;
     if (N === 0) return;
@@ -347,6 +354,19 @@ const seedNote = firstNav?.hand ?? "";
     let wheelRotation = 0;   // unbounded — drives the arc only
     let listRotation = 0;    // clamped — drives the items list
     let activeIndex = 0;     // clamped to [0, N-1]
+    /* True once the user has moved the highlight themselves (spin, step,
+     * keyboard) without yet navigating. While pinned, opening the device
+     * keeps their chosen item instead of snapping back to the current
+     * route. Cleared by a real navigation (astro:after-swap). */
+    let selectionPinned = false;
+    /* True once at least one in-app navigation has happened this session,
+     * so `back` knows there is real history to step through rather than
+     * leaving the site (or stalling) on a freshly-opened deep link. */
+    let hasInAppHistory = false;
+    /* When closing from an in-device control, focus is restored to the
+     * puck for keyboard users. That focus event must not immediately
+     * re-open the fine-pointer Navigator. */
+    let suppressFocusOpen = false;
     let rowCenters: number[] = [];
     let frameCenter = 0;
 
@@ -388,11 +408,11 @@ const seedNote = firstNav?.hand ?? "";
 
     const paintTransforms = (listX: number, wheelRot: number) => {
       if (wheelRot !== lastPaintedWheelRot) {
-        shell.style.setProperty("--dock-wheel-rot", `${wheelRot}deg`);
+        shell.style.setProperty("--nav-wheel-rot", `${wheelRot}deg`);
         lastPaintedWheelRot = wheelRot;
       }
       if (listX !== lastPaintedListX) {
-        shell.style.setProperty("--dock-list-x", `${listX}px`);
+        shell.style.setProperty("--nav-list-x", `${listX}px`);
         lastPaintedListX = listX;
       }
     };
@@ -419,6 +439,11 @@ const seedNote = firstNav?.hand ?? "";
           activeIndex = nearest;
           rows[activeIndex]?.classList.add("is-active");
           writeMeta();
+          // A detent crossing here is always gesture-driven (drag, wheel
+          // scroll, cap step). Programmatic snaps target the current
+          // activeIndex, so they never reach this branch — making this
+          // the single honest signal that the user picked something.
+          selectionPinned = true;
         }
       }
 
@@ -459,6 +484,54 @@ const seedNote = firstNav?.hand ?? "";
       if (screenNote.textContent !== note) screenNote.textContent = note;
     };
 
+    /* ---------- route-aware selection ---------- */
+
+    /**
+     * The navigator remembers where you are by mirroring the current
+     * route. Because the shell is `transition:persist`ed, the DOM and
+     * this controller survive navigation — so rather than resetting to
+     * the top item every time, we point the highlight at the nav row
+     * that owns the page you're on.
+     *
+     * Only internal nav rows can match: social rows are skipped (mailto
+     * protocol, or a different host). Deeper routes resolve to their
+     * section, e.g. `/projects/oasis` highlights the `projects` row, via
+     * a longest-prefix match.
+     */
+    const normalizePath = (p: string) =>
+      p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p;
+
+    const indexForCurrentPath = (): number => {
+      const here = normalizePath(location.pathname);
+      let best = -1;
+      let bestLen = -1;
+      rows.forEach((row, i) => {
+        if (row.protocol === "mailto:" || row.host !== location.host) return;
+        const rp = normalizePath(row.pathname);
+        const matches = here === rp || (rp !== "/" && here.startsWith(rp + "/"));
+        if (matches && rp.length > bestLen) {
+          best = i;
+          bestLen = rp.length;
+        }
+      });
+      return best;
+    };
+
+    /** Point the highlight at the current route. Returns false when no
+     *  nav row matches (e.g. the 404 page), leaving selection as-is. */
+    const syncActiveToPath = ({ snap = false } = {}): boolean => {
+      const idx = indexForCurrentPath();
+      if (idx < 0) return false;
+      if (idx !== activeIndex) {
+        rows[activeIndex]?.classList.remove("is-active");
+        activeIndex = idx;
+        rows[activeIndex]?.classList.add("is-active");
+      }
+      writeMeta();
+      if (snap) snapToDetent(activeIndex);
+      return true;
+    };
+
     /* ---------- open / close ---------- */
 
     const lockScroll = (lock: boolean) => {
@@ -480,7 +553,7 @@ const seedNote = firstNav?.hand ?? "";
      * stale inline transforms, or transitions:none from a previous
      * drag don't carry into the new session. This is what fixes the
      * "broken on reopen after navigation" symptom — without it, a
-     * persisted dock can inherit a translateX from a half-completed
+     * persisted Navigator can inherit a translateX from a half-completed
      * drag on the previous page. */
     const resetGestureState = () => {
       list.classList.remove("is-dragging");
@@ -529,7 +602,7 @@ const seedNote = firstNav?.hand ?? "";
       else if (e.key === "ArrowUp" || e.key === "ArrowLeft") { e.preventDefault(); stepBy(-1); }
       else if (e.key === "Enter" || e.key === " ") {
         const t = e.target as HTMLElement;
-        if (t.matches(".dock-player-wheel, .dock-player-wheel-arc")) {
+        if (t.matches(".nav-wheel, .nav-wheel-arc")) {
           e.preventDefault();
           activateCurrent();
         }
@@ -557,23 +630,22 @@ const seedNote = firstNav?.hand ?? "";
     ]);
 
     // Open-only listeners — bound when the player opens and released
-    // when it closes. Touch-device-only listeners (the page-level
-    // tap-outside safety net) are conditionally included so closed
-    // desktops never carry a global pointerdown.
+    // when it closes, so a closed device never carries global listeners.
+    // The page-level click-outside safety net is bound on every device:
+    // on touch it dismisses the raised device; on desktop it's how a
+    // click-stuck device gets dismissed once the cursor has left it.
     const openListenerBindings: Binding[] = [
       { target: wheel,    type: "pointerdown", handler: (e) => onPointerDown(e as PointerEvent) },
       { target: wheel,    type: "wheel",       handler: (e) => onWheelScroll(e as WheelEvent), options: { passive: false } },
       { target: document, type: "keydown",     handler: (e) => onDocKeydown(e as KeyboardEvent) },
       { target: window,   type: "scroll",      handler: () => onScrollWhileOpen(), options: { passive: true } },
-    ];
-    if (isTouchDevice) {
-      openListenerBindings.push({
+      {
         target: document,
         type: "pointerdown",
         handler: (e) => onTapOutside(e as PointerEvent),
         options: { capture: true },
-      });
-    }
+      },
+    ];
     const openListeners = listenerGroup(openListenerBindings);
 
     const bindOpenListeners = () => openListeners.bind();
@@ -597,17 +669,17 @@ const seedNote = firstNav?.hand ?? "";
         lockScroll(true);
         bindOpenListeners();
         resetGestureState();
-        rows.forEach((r) => r.classList.remove("is-active"));
-        activeIndex = 0;
-        rows[0]?.classList.add("is-active");
-        writeMeta();
+        // Default to highlighting the page we're on — but if the user
+        // moved the highlight themselves and hasn't navigated yet, keep
+        // their choice instead of yanking it back to the current route.
+        if (!selectionPinned) syncActiveToPath();
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             measure();
             refreshWheelCenter();
             list.classList.add("is-snapping");
             wheelArc.style.transition = "transform 380ms var(--motion-ease-spring)";
-            snapToDetent(0);
+            snapToDetent(activeIndex);
           });
         });
       } else {
@@ -620,7 +692,11 @@ const seedNote = firstNav?.hand ?? "";
         stage.setAttribute("inert", "");
         lockScroll(false);
         if (document.activeElement && stage.contains(document.activeElement)) {
+          suppressFocusOpen = true;
           (puck as HTMLElement).focus({ preventScroll: true });
+          window.setTimeout(() => {
+            suppressFocusOpen = false;
+          }, 0);
         }
       }
     };
@@ -777,9 +853,35 @@ const seedNote = firstNav?.hand ?? "";
       if (row) row.click();
     };
 
+    /** Parent route, one segment up: `/projects/oasis` → `/projects`,
+     *  `/projects` → `/`, `/` → null. Used only as a fallback when there
+     *  is no in-app history to step back through (e.g. a deep link opened
+     *  in a fresh tab). */
+    const parentRoute = (path: string): string | null => {
+      const here = normalizePath(path);
+      if (here === "/" || here === "") return null;
+      const cut = here.lastIndexOf("/");
+      return cut <= 0 ? "/" : here.slice(0, cut);
+    };
+
+    /** Back = one step along the path the visitor actually took. This is a
+     *  history move, not a menu step, so the boundary "tug" never applies.
+     *  ClientRouter turns the popstate into a view transition, and our
+     *  astro:after-swap handler re-points the highlight afterwards. */
+    const goBack = () => {
+      if (hasInAppHistory) {
+        history.back();
+        return;
+      }
+      const up = parentRoute(location.pathname);
+      if (up && up !== normalizePath(location.pathname)) navigate(up);
+      else history.back();
+    };
+
     const dispatchAction = (action: string) => {
       switch (action) {
         case "menu":  setOpen(false); break;
+        case "back":  goBack();       break;
         case "prev":  stepBy(-1);     break;
         case "next":  stepBy(+1);     break;
         case "play":  activateCurrent(); break;
@@ -807,53 +909,47 @@ const seedNote = firstNav?.hand ?? "";
       puck.addEventListener("click", () => setOpen(!isOpen));
       backdrop.addEventListener("click", () => setOpen(false));
     } else {
-      // Desktop: hovering the visible peek (the puck) "pulls the
-      // device out of the pocket". Leaving the open device tucks it
-      // back. We listen on the puck for entry and on the stage for
-      // exit, with a small grace window so the cursor's path from
-      // puck → device doesn't accidentally close-then-reopen.
-      let leaveTimer = 0;
-      const cancelLeave = () => window.clearTimeout(leaveTimer);
+      // Desktop: hovering the visible peek (the puck) "pulls the device
+      // out of the pocket" and it STAYS out. There is intentionally no
+      // hover-out / focus-out close — once open it remains on the page
+      // until the user clicks outside its bounds (onTapOutside, bound in
+      // openListenerBindings) or presses Escape. So an in-bounds action
+      // (spinning the wheel, picking an item) can never minimize it.
       const openNow = () => {
-        cancelLeave();
+        if (suppressFocusOpen) return;
         if (!isOpen) setOpen(true);
       };
-      const closeAfterGrace = () => {
-        cancelLeave();
-        leaveTimer = window.setTimeout(() => {
-          // Bail if the user has come back over the device or focused
-          // a child since the timer was scheduled.
-          if (
-            puck.matches(":hover") ||
-            stage.matches(":hover") ||
-            shell.matches(":focus-within")
-          ) return;
-          setOpen(false);
-        }, 260);
-      };
       puck.addEventListener("pointerenter", openNow);
-      stage.addEventListener("pointerenter", cancelLeave);
-      stage.addEventListener("pointerleave", closeAfterGrace);
-      puck.addEventListener("pointerleave", () => {
-        // If the device hasn't started opening yet, the user just
-        // brushed past the puck — don't open.
-        if (!isOpen) return;
-        closeAfterGrace();
-      });
+      // Keyboard focus reaching the device opens it too; closing stays
+      // exclusively with outside-click / Escape.
       shell.addEventListener("focusin", openNow);
-      shell.addEventListener("focusout", closeAfterGrace);
-      // Click on the puck still toggles — useful for keyboard
-      // activation (Enter) and as a redundant click-to-open path.
-      puck.addEventListener("click", () => setOpen(!isOpen));
+      // Click / Enter on the puck is a redundant open path — never a
+      // toggle, so clicking the handle itself won't tuck it away.
+      puck.addEventListener("click", openNow);
     }
 
     document.addEventListener("astro:before-preparation", () => {
-      if (isOpen) setOpen(false);
+      // On touch, collapse so the destination page isn't hidden behind
+      // the raised device + dim backdrop. On desktop the device is
+      // persisted and hover-controlled, so we leave it exactly as the
+      // user left it — no tuck-away flash on every navigation.
+      if (isOpen && isTouchDevice) setOpen(false);
     });
 
     let afterSwapRaf = 0;
     document.addEventListener("astro:after-swap", () => {
       rowCentersReady = false;
+      // We've now navigated at least once inside the app, so `back` can
+      // safely step through real history instead of falling back.
+      hasInAppHistory = true;
+      // A real navigation resolves any pending manual pick — the page
+      // we landed on becomes the new source of truth for the highlight.
+      selectionPinned = false;
+      // Reflect the page we landed on. The cheap class + text updates
+      // run immediately (so even the closed puck's screen is correct);
+      // layout-dependent snapping waits for the next frames and only
+      // runs while the device is open.
+      syncActiveToPath();
       if (afterSwapRaf) cancelAnimationFrame(afterSwapRaf);
       afterSwapRaf = requestAnimationFrame(() => {
         afterSwapRaf = requestAnimationFrame(() => {
@@ -866,12 +962,13 @@ const seedNote = firstNav?.hand ?? "";
       });
     });
 
-    /* ---------- initial paint — no layout reads until first open ---------- */
+    /* ---------- initial paint — highlight the current route ---------- */
 
-    rows[0]?.classList.add("is-active");
     activeIndex = 0;
-    writeMeta();
+    rows[0]?.classList.add("is-active");
+    // Fall back to the first item only when no nav row matches (404).
+    if (!syncActiveToPath()) writeMeta();
   };
 
-  initDock();
+  initNavigator();
 </script>

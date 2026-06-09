@@ -1,0 +1,439 @@
+---
+/**
+ * /design-lab/fonts — display-font auditioning playground.
+ *
+ * Loads every candidate display font at once and lets you switch the
+ * heading font at runtime. Your pick is remembered across reloads, and
+ * the readout prints the exact edits to apply when you commit to one.
+ */
+import DesignLabLayout from "../../layouts/DesignLabLayout.astro";
+import { site } from "../../data/site";
+
+// Each candidate carries everything the runtime switcher needs AND the
+// exact edits you'd paste later, so picking one tells you precisely what
+// to change.
+const fonts = [
+  {
+    id: "instrument-serif",
+    name: "Instrument Serif",
+    note: "current — elegant editorial serif",
+    stack: '"Instrument Serif", "Fraunces", ui-serif, Georgia, serif',
+    google: "Instrument+Serif:ital@0;1",
+  },
+  {
+    id: "fraunces",
+    name: "Fraunces",
+    note: "soft, wonky, characterful",
+    stack: '"Fraunces", ui-serif, Georgia, serif',
+    google: "Fraunces:ital,wght@0,400;0,600;1,400",
+  },
+  {
+    id: "young-serif",
+    name: "Young Serif",
+    note: "chunky, warm, handmade",
+    stack: '"Young Serif", ui-serif, Georgia, serif',
+    google: "Young+Serif",
+  },
+  {
+    id: "newsreader",
+    name: "Newsreader",
+    note: "literary, editorial",
+    stack: '"Newsreader", ui-serif, Georgia, serif',
+    google: "Newsreader:ital,wght@0,400;0,600;1,400",
+  },
+  {
+    id: "dm-serif-display",
+    name: "DM Serif Display",
+    note: "dramatic high contrast",
+    stack: '"DM Serif Display", ui-serif, Georgia, serif',
+    google: "DM+Serif+Display:ital@0;1",
+  },
+  {
+    id: "gloock",
+    name: "Gloock",
+    note: "high contrast, stylish",
+    stack: '"Gloock", ui-serif, Georgia, serif',
+    google: "Gloock",
+  },
+  {
+    id: "cormorant",
+    name: "Cormorant",
+    note: "delicate, airy, elegant",
+    stack: '"Cormorant", ui-serif, Georgia, serif',
+    google: "Cormorant:ital,wght@0,400;0,600;1,400",
+  },
+  {
+    id: "bricolage-grotesque",
+    name: "Bricolage Grotesque",
+    note: "playful display sans",
+    stack: '"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif',
+    google: "Bricolage+Grotesque:wght@400;600;700",
+  },
+  {
+    id: "unbounded",
+    name: "Unbounded",
+    note: "rounded, very playful",
+    stack: '"Unbounded", ui-sans-serif, system-ui, sans-serif',
+    google: "Unbounded:wght@400;600;700",
+  },
+];
+
+const candidateFonts =
+  "https://fonts.googleapis.com/css2" +
+  fonts.map((f, i) => (i === 0 ? "?family=" : "&family=") + f.google).join("") +
+  "&display=swap";
+---
+
+<DesignLabLayout
+  title="Fonts"
+  active="fonts"
+  blurb="Click a font to apply it to every heading below. Your pick is remembered across reloads; the readout shows the exact edits to make it real."
+>
+  <link slot="head" rel="stylesheet" href={candidateFonts} />
+
+  <div class="lab-picker" role="group" aria-label="Display font">
+    {
+      fonts.map((f) => (
+        <button
+          type="button"
+          class="lab-chip"
+          data-font-id={f.id}
+          data-stack={f.stack}
+          data-name={f.name}
+          data-google={f.google}
+          style={`--chip-face:${f.stack}`}
+        >
+          <span class="lab-chip-name">{f.name}</span>
+          <span class="lab-chip-note">{f.note}</span>
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="lab-controls">
+    <button type="button" id="lab-cycle" class="lab-action">▶ Cycle through all</button>
+    <label class="lab-toggle">
+      <input type="checkbox" id="lab-italic" /> Italic sample
+    </label>
+  </div>
+
+  <div class="lab-readout">
+    <p class="lab-readout-label">
+      Now showing: <strong id="lab-current">Instrument Serif</strong>. To make it
+      real, apply these two edits:
+    </p>
+    <pre class="lab-code"><code id="lab-edit-css"></code></pre>
+    <pre class="lab-code"><code id="lab-edit-google"></code></pre>
+  </div>
+
+  <div class="lab-stage" id="lab-stage">
+    {/* Hero — kicker (Caveat) + big display H1, exactly like the home page */}
+    <section class="lab-sample">
+      <p class="font-hand ink-coral lab-kicker">hi, I&rsquo;m</p>
+      <h2 class="lab-h1 lab-display">{site.name}</h2>
+      <p class="lab-h1-gradient lab-display text-gradient">An oasis of code &amp; craft.</p>
+      <p class="font-hand ink-lavender lab-tagline">{site.tagline}</p>
+    </section>
+
+    {/* Section headings at the real h2 / h3 scale */}
+    <section class="lab-sample lab-grid">
+      <div>
+        <h3 class="lab-h2 lab-display">The work</h3>
+        <p class="lab-body-copy">{site.bio}</p>
+      </div>
+      <div>
+        <h3 class="lab-h2 lab-display">Notes &amp; drafts</h3>
+        <p class="lab-h3 lab-display ink-lavender">Designing with pastels</p>
+        <p class="lab-h3 lab-display ink-mint">The slow internet</p>
+        <p class="lab-h3 lab-display ink-sky">Building the Navigator</p>
+      </div>
+    </section>
+
+    {/* Italic + monogram usages — display type is used italic in a few
+        spots (prose subheads, the Navigator monogram), so judge both. */}
+    <section class="lab-sample lab-grid">
+      <div>
+        <p class="lab-mini-label">prose subhead (italic)</p>
+        <p class="lab-h2 lab-display lab-italic">A quieter way to ship.</p>
+        <p class="lab-body-copy">
+          The quick brown fox jumps over the lazy dog. 0123456789 &mdash; &amp; ?
+          ! &ldquo;oasis&rdquo; (craft) #04.
+        </p>
+      </div>
+      <div class="lab-monogram-wrap">
+        <p class="lab-mini-label">monogram</p>
+        <span class="lab-monogram lab-display lab-italic">{site.monogram}</span>
+      </div>
+    </section>
+
+    {/* Pangram strip across weights so single-weight faces are obvious */}
+    <section class="lab-sample">
+      <p class="lab-mini-label">weights</p>
+      <p class="lab-weight lab-display" style="font-weight:400">Calm, colorful, fast &mdash; 400</p>
+      <p class="lab-weight lab-display" style="font-weight:600">Calm, colorful, fast &mdash; 600</p>
+      <p class="lab-weight lab-display" style="font-weight:700">Calm, colorful, fast &mdash; 700</p>
+    </section>
+  </div>
+</DesignLabLayout>
+
+<style>
+  .lab-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .lab-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.05rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-edge-strong);
+    background: var(--color-surface);
+    cursor: pointer;
+    text-align: left;
+    transition:
+      border-color var(--motion-duration-fast) var(--motion-ease-out),
+      transform var(--motion-duration-fast) var(--motion-ease-out),
+      background var(--motion-duration-fast) var(--motion-ease-out);
+  }
+  .lab-chip:hover {
+    border-color: var(--color-pastel-lavender-deep);
+    transform: translateY(-1px);
+  }
+  .lab-chip[aria-pressed="true"] {
+    border-color: var(--color-pastel-lavender-deep);
+    background: color-mix(in srgb, var(--color-pastel-lavender) 30%, var(--color-surface));
+    box-shadow: var(--shadow-soft);
+  }
+  .lab-chip-name {
+    font-family: var(--chip-face);
+    font-size: 1.05rem;
+    line-height: 1.1;
+    color: var(--color-ink);
+  }
+  .lab-chip-note {
+    font-size: 0.68rem;
+    color: var(--color-ink-muted);
+  }
+
+  .lab-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.85rem;
+  }
+  .lab-action {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.35rem 0.8rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-edge-strong);
+    background: var(--color-surface);
+    cursor: pointer;
+  }
+  .lab-action[data-on="true"] {
+    background: var(--color-pastel-mint);
+    border-color: var(--color-pastel-mint-deep);
+  }
+  .lab-toggle {
+    font-size: 0.8rem;
+    color: var(--color-ink-soft);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+  }
+
+  .lab-readout {
+    margin-top: 0.85rem;
+  }
+  .lab-readout-label {
+    margin: 0 0 0.35rem;
+    font-size: 0.8rem;
+    color: var(--color-ink-soft);
+  }
+  .lab-code {
+    margin: 0 0 0.4rem;
+    padding: 0.5rem 0.7rem;
+    background: var(--color-ink);
+    color: #f4f1ff;
+    border-radius: var(--radius-tight);
+    overflow-x: auto;
+  }
+  .lab-code code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    white-space: pre;
+  }
+
+  /* sample stage — headings follow the live --lab-display var */
+  .lab-stage {
+    --lab-display: "Instrument Serif", ui-serif, Georgia, serif;
+    margin-top: 1.5rem;
+  }
+  .lab-stage .lab-display {
+    font-family: var(--lab-display);
+    color: var(--color-ink);
+    letter-spacing: -0.005em;
+    line-height: 1.08;
+  }
+
+  .lab-sample {
+    padding: 2rem 0;
+    border-bottom: 1px dashed var(--color-edge);
+  }
+  .lab-kicker {
+    font-size: 1.75rem;
+    margin: 0 0 -0.4rem;
+  }
+  .lab-h1 {
+    font-size: clamp(2.75rem, 4.6vw + 1rem, 5.25rem);
+    font-weight: 400;
+    margin: 0;
+  }
+  .lab-h1-gradient {
+    font-size: clamp(2rem, 3vw + 1rem, 3.5rem);
+    line-height: 1.05;
+    margin: 0.2rem 0 0;
+  }
+  .lab-h2 {
+    font-size: clamp(2rem, 2.4vw + 0.9rem, 3rem);
+    font-weight: 400;
+    margin: 0;
+  }
+  .lab-h3 {
+    font-size: clamp(1.25rem, 0.9vw + 0.9rem, 1.6rem);
+    font-weight: 400;
+    margin: 0.35rem 0 0;
+  }
+  .lab-tagline {
+    font-size: 1.5rem;
+    margin: 0.6rem 0 0;
+  }
+
+  .lab-grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 720px) {
+    .lab-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .lab-body-copy {
+    font-family: var(--font-sans);
+    color: var(--color-ink-soft);
+    font-size: 1rem;
+    line-height: 1.65;
+    margin-top: 0.6rem;
+  }
+  .lab-mini-label {
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+    margin: 0 0 0.4rem;
+  }
+  .lab-italic {
+    font-style: italic;
+  }
+  .lab-monogram-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .lab-monogram {
+    font-size: 7rem;
+    line-height: 1;
+    color: var(--color-pastel-lavender-deep) !important;
+  }
+  .lab-weight {
+    font-size: clamp(1.5rem, 2vw + 1rem, 2.25rem);
+    margin: 0.15rem 0;
+  }
+</style>
+
+<script>
+  const stage = document.getElementById("lab-stage");
+  const chips = Array.from(
+    document.querySelectorAll<HTMLButtonElement>(".lab-chip"),
+  );
+  const currentEl = document.getElementById("lab-current");
+  const cssEl = document.getElementById("lab-edit-css");
+  const googleEl = document.getElementById("lab-edit-google");
+  const italicToggle = document.getElementById(
+    "lab-italic",
+  ) as HTMLInputElement | null;
+  const cycleBtn = document.getElementById("lab-cycle");
+
+  const STORE_KEY = "design-lab:display-font";
+
+  const apply = (chip: HTMLButtonElement, persist = true) => {
+    const stack = chip.dataset.stack ?? "";
+    const name = chip.dataset.name ?? "";
+    const google = chip.dataset.google ?? "";
+
+    if (stage) stage.style.setProperty("--lab-display", stack);
+
+    chips.forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
+
+    if (currentEl) currentEl.textContent = name;
+    if (cssEl) {
+      cssEl.textContent =
+        "/* src/styles/global.css */\n--font-display: " + stack + ";";
+    }
+    if (googleEl) {
+      googleEl.textContent =
+        "<!-- BaseLayout.astro: swap the display family in the fonts URL -->\n&family=" +
+        google;
+    }
+
+    if (persist) {
+      try {
+        localStorage.setItem(STORE_KEY, chip.dataset.fontId ?? "");
+      } catch {}
+    }
+  };
+
+  chips.forEach((chip) => chip.addEventListener("click", () => apply(chip)));
+
+  italicToggle?.addEventListener("change", () => {
+    document
+      .querySelectorAll(".lab-h1, .lab-weight")
+      .forEach((el) => el.classList.toggle("lab-italic", italicToggle.checked));
+  });
+
+  // Cycle through every candidate so you can "watch" them in turn.
+  let cycleTimer = 0;
+  let cycleIdx = 0;
+  cycleBtn?.addEventListener("click", () => {
+    const on = cycleBtn.getAttribute("data-on") === "true";
+    if (on) {
+      window.clearInterval(cycleTimer);
+      cycleBtn.setAttribute("data-on", "false");
+      cycleBtn.textContent = "▶ Cycle through all";
+      return;
+    }
+    cycleBtn.setAttribute("data-on", "true");
+    cycleBtn.textContent = "⏸ Stop cycling";
+    cycleTimer = window.setInterval(() => {
+      cycleIdx = (cycleIdx + 1) % chips.length;
+      apply(chips[cycleIdx], false);
+    }, 1600);
+  });
+
+  // Restore last pick (or default to the first chip = current font).
+  let initial = chips[0];
+  try {
+    const saved = localStorage.getItem(STORE_KEY);
+    const match = chips.find((c) => c.dataset.fontId === saved);
+    if (match) initial = match;
+  } catch {}
+  if (initial) apply(initial, false);
+</script>

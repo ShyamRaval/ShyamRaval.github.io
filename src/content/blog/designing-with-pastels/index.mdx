@@ -1,0 +1,47 @@
+---
+title: Designing With Pastels Without Going Pale
+description: How to keep a soft palette legible — six accents, one source of truth, and contrast as a nudge.
+publishedAt: 2026-02-02
+tags: ["design", "color", "css"]
+accent: butter
+cover: blog/designing-with-pastels/cover
+---
+
+Pastels are lovely and treacherous. They read as warm, friendly, and
+unhurried — and they fail contrast checks the instant you look away. Here
+is how this site stays soft *and* legible.
+
+## Accents on white, never washes
+
+The first rule is restraint: pastels are **accents on a white canvas**,
+never full-page background washes. Color lives in text, chips, and small
+chrome. The page itself stays bright, so the soft tones have something to
+push against.
+
+## Six accents, one source of truth
+
+The whole site speaks in six pastels — coral, sky, mint, butter,
+lavender, rose. Crucially, that list exists in *one* file. Every
+component imports the accent type and the helper that maps an accent to
+its class; nothing re-declares the palette inline.
+
+```ts
+import { type Accent, chipClass, inkClass } from "../lib/accents";
+
+const tagClass = chipClass("mint");   // → "chip-mint"
+const labelClass = inkClass("sky");   // → "ink-sky"
+```
+
+Adding a seventh accent later is a one-line change plus its CSS variables —
+not a hunt through a dozen files.
+
+## Let the deep shade do the work
+
+Each pastel ships in two values: the soft tint for fills, and a **deep**
+companion for text and borders. Body text and links use the deep shade so
+contrast holds; fills use the tint so the surface stays gentle. Same hue,
+two jobs.
+
+The result is a site that feels like a watercolour and still passes the
+checks. Softness is a constraint you design *within*, not an excuse to
+skip the fundamentals.

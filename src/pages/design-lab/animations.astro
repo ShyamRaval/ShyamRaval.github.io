@@ -1,0 +1,339 @@
+---
+/**
+ * /design-lab/animations — living reference of the site's motion patterns.
+ * Entrance animations have a Replay button; hover/idle demos play on
+ * interaction. Everything uses the real utility classes + keyframes from
+ * global.css, so what you see here is exactly what ships.
+ */
+import DesignLabLayout from "../../layouts/DesignLabLayout.astro";
+---
+
+<DesignLabLayout
+  title="Animations"
+  active="animations"
+  blurb="The motion patterns used across the site. Replay the entrance ones; hover the rest. All driven by the real keyframes + utilities in global.css."
+>
+  {/* reveal-up */}
+  <section class="an-card">
+    <div class="an-head">
+      <div>
+        <h2 class="an-h2">Reveal up</h2>
+        <p class="an-note">
+          The default entrance — fade in while rising 12px. Used via
+          <code>.reveal</code> on sections as they appear.
+        </p>
+      </div>
+      <button type="button" class="an-replay" data-replay="#an-reveal">↻ Replay</button>
+    </div>
+    <div class="an-stage">
+      <div class="an-block reveal" id="an-reveal">reveal</div>
+    </div>
+    <pre class="an-code"><code>.reveal &#123;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: reveal-up var(--motion-duration-slow) var(--motion-ease-out) forwards;
+&#125;</code></pre>
+  </section>
+
+  {/* reveal-stagger */}
+  <section class="an-card">
+    <div class="an-head">
+      <div>
+        <h2 class="an-h2">Reveal stagger</h2>
+        <p class="an-note">
+          Same reveal, but children fan in on a 40 → 460ms delay ramp. Used
+          via <code>.reveal-stagger</code> on grids of cards.
+        </p>
+      </div>
+      <button type="button" class="an-replay" data-replay-stagger="#an-stagger">↻ Replay</button>
+    </div>
+    <div class="an-stage">
+      <div class="reveal-stagger an-stagger-grid" id="an-stagger">
+        <div class="an-block an-block--sm">1</div>
+        <div class="an-block an-block--sm">2</div>
+        <div class="an-block an-block--sm">3</div>
+        <div class="an-block an-block--sm">4</div>
+        <div class="an-block an-block--sm">5</div>
+        <div class="an-block an-block--sm">6</div>
+      </div>
+    </div>
+    <pre class="an-code"><code>.reveal-stagger &gt; *:nth-child(1) &#123; animation-delay: 40ms; &#125;
+.reveal-stagger &gt; *:nth-child(2) &#123; animation-delay: 110ms; &#125;
+/* … ramps to 460ms for the 7th child onward */</code></pre>
+  </section>
+
+  {/* puck-wiggle */}
+  <section class="an-card">
+    <div class="an-head">
+      <div>
+        <h2 class="an-h2">Puck wiggle</h2>
+        <p class="an-note">
+          The Navigator's idle "alive, not shaking" tilt — a ±1.5° rock that
+          runs at rest and pauses on hover.
+        </p>
+      </div>
+    </div>
+    <div class="an-stage">
+      <div class="an-puck">S</div>
+    </div>
+    <pre class="an-code"><code>@keyframes puck-wiggle &#123;
+  0%, 100% &#123; transform: rotate(-5deg);   &#125;
+  50%      &#123; transform: rotate(-3.5deg); &#125;
+&#125;
+/* animation: puck-wiggle 3.2s var(--motion-ease-out) infinite; */</code></pre>
+  </section>
+
+  {/* link-underline */}
+  <section class="an-card">
+    <div class="an-head">
+      <div>
+        <h2 class="an-h2">Link underline</h2>
+        <p class="an-note">
+          A quiet link affordance: an underline that grows from left to right.
+          Hover the link to see it.
+        </p>
+      </div>
+    </div>
+    <div class="an-stage an-stage--text">
+      <a href="#" class="link-underline an-link" onclick="return false">a quiet, growing underline</a>
+    </div>
+    <pre class="an-code"><code>.link-underline &#123;
+  background-size: 0% 1px;
+  transition: background-size var(--motion-duration-base) var(--motion-ease-out);
+&#125;
+.link-underline:hover &#123; background-size: 100% 1px; &#125;</code></pre>
+  </section>
+
+  {/* card lift */}
+  <section class="an-card">
+    <div class="an-head">
+      <div>
+        <h2 class="an-h2">Card lift</h2>
+        <p class="an-note">
+          Cards rise 2px and firm up their border on hover. Used via
+          <code>.card-quiet</code>.
+        </p>
+      </div>
+    </div>
+    <div class="an-stage">
+      <div class="card-quiet an-liftcard">hover me</div>
+    </div>
+    <pre class="an-code"><code>.card-quiet &#123; transition: transform var(--motion-duration-base) var(--motion-ease-out); &#125;
+.card-quiet:hover &#123; transform: translateY(-2px); &#125;</code></pre>
+  </section>
+
+  {/* spring press */}
+  <section class="an-card">
+    <div class="an-head">
+      <div>
+        <h2 class="an-h2">Spring press</h2>
+        <p class="an-note">
+          The springy easing (<code>--motion-ease-spring</code>) used for
+          press feedback on the Navigator's centre + wheel. Press and hold.
+        </p>
+      </div>
+    </div>
+    <div class="an-stage">
+      <button type="button" class="an-press">press &amp; hold</button>
+    </div>
+    <pre class="an-code"><code>transition: transform 200ms var(--motion-ease-spring);
+/* :active */ transform: scale(0.94);</code></pre>
+  </section>
+</DesignLabLayout>
+
+<style>
+  .an-card {
+    padding: 1.25rem 0 1.6rem;
+    border-bottom: 1px dashed var(--color-edge);
+  }
+  .an-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .an-h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 400;
+    margin: 0;
+  }
+  .an-note {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--color-ink-muted);
+    margin: 0.2rem 0 0;
+    max-width: 40rem;
+  }
+  .an-note code,
+  .an-code code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+  }
+  .an-replay {
+    flex-shrink: 0;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.35rem 0.8rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-edge-strong);
+    background: var(--color-surface);
+    cursor: pointer;
+    transition: border-color var(--motion-duration-fast) var(--motion-ease-out);
+  }
+  .an-replay:hover {
+    border-color: var(--color-pastel-lavender-deep);
+  }
+
+  .an-stage {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 7rem;
+    padding: 1.25rem;
+    border-radius: var(--radius-card);
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-edge);
+    margin-bottom: 0.85rem;
+  }
+  .an-stage--text {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+  }
+
+  .an-block {
+    display: grid;
+    place-items: center;
+    width: 7rem;
+    height: 4rem;
+    border-radius: var(--radius-card);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(
+      120deg,
+      var(--color-pastel-lavender-deep),
+      var(--color-pastel-sky-deep)
+    );
+  }
+  .an-block--sm {
+    width: 100%;
+    height: 3.25rem;
+  }
+  .an-stagger-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+    width: 100%;
+  }
+  @media (min-width: 620px) {
+    .an-stagger-grid {
+      grid-template-columns: repeat(6, 1fr);
+    }
+  }
+
+  /* mirror of the real .nav-puck-body idle wiggle */
+  .an-puck {
+    display: grid;
+    place-items: center;
+    width: 4.5rem;
+    height: 6rem;
+    border-radius: 1rem;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.8rem;
+    color: #fff;
+    background: linear-gradient(
+      150deg,
+      var(--color-pastel-coral-deep),
+      var(--color-pastel-lavender-deep)
+    );
+    box-shadow: var(--shadow-nav);
+    transform-origin: bottom center;
+    animation: puck-wiggle 3.2s var(--motion-ease-out) infinite;
+  }
+  .an-puck:hover {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .an-puck {
+      animation: none;
+      transform: rotate(-4deg);
+    }
+  }
+
+  .an-link {
+    color: var(--color-pastel-lavender-deep);
+    cursor: pointer;
+  }
+
+  .an-liftcard {
+    display: grid;
+    place-items: center;
+    width: 11rem;
+    height: 5rem;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
+  }
+
+  .an-press {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.7rem 1.4rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-pastel-mint-deep);
+    background: var(--color-pastel-mint);
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: transform 200ms var(--motion-ease-spring);
+  }
+  .an-press:active {
+    transform: scale(0.94);
+  }
+
+  .an-code {
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+    background: var(--color-ink);
+    color: #f4f1ff;
+    border-radius: var(--radius-tight);
+    overflow-x: auto;
+  }
+  .an-code code {
+    white-space: pre;
+  }
+</style>
+
+<script>
+  // Replay = strip the animating class, force reflow, re-add it.
+  const replay = (el: Element, cls: string) => {
+    el.classList.remove(cls);
+    void (el as HTMLElement).offsetWidth;
+    el.classList.add(cls);
+  };
+
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-replay]")
+    .forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const target = document.querySelector(btn.dataset.replay ?? "");
+        if (target) replay(target, "reveal");
+      }),
+    );
+
+  // Stagger: toggling the parent class re-arms the `.reveal-stagger > *`
+  // rule on every child, so they all restart from their delays.
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-replay-stagger]")
+    .forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const target = document.querySelector(btn.dataset.replayStagger ?? "");
+        if (target) replay(target, "reveal-stagger");
+      }),
+    );
+</script>

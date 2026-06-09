@@ -8,13 +8,15 @@ import LogoCloud from "../components/LogoCloud.astro";
 
 import { site } from "../data/site";
 import { timeline } from "../data/timeline";
-import { featuredProjects } from "../data/featured-projects";
+import { getFeaturedProjects } from "../lib/content";
+
+const featuredProjects = await getFeaturedProjects(3);
 ---
 <BaseLayout title="Home" description={site.seo.defaultDescription}>
   {/* ============================================================
       HERO — editorial two-column on desktop, single column on mobile.
       No CTA buttons by design: the header carries navigation,
-      the dock carries contact. The hero just speaks.
+      the Navigator carries contact. The hero just speaks.
      ============================================================ */}
   <section class="container-page pt-12 md:pt-20 pb-10 md:pb-16">
     <div class="grid gap-10 md:gap-16 md:grid-cols-[1.35fr_0.65fr] md:items-end">
@@ -95,8 +97,8 @@ import { featuredProjects } from "../data/featured-projects";
      ============================================================ */}
   <Section id="featured" label="recent work" labelAccent="butter">
     <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 items-start reveal-stagger list-none p-0">
-      {featuredProjects.map((project) => (
-        <li class="self-start"><ProjectCard project={project} size="compact" /></li>
+      {featuredProjects.map((entry) => (
+        <li class="self-start"><ProjectCard entry={entry} size="compact" /></li>
       ))}
     </ul>
   </Section>

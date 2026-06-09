@@ -1,0 +1,122 @@
+---
+/**
+ * /design-lab — hub for the throwaway design tooling. Add a new card here
+ * when you add a new /design-lab/<thing> page.
+ */
+import DesignLabLayout from "../../layouts/DesignLabLayout.astro";
+
+const tools = [
+  {
+    href: "/design-lab/fonts",
+    title: "Fonts",
+    blurb: "Audition display fonts at runtime; remembers your pick and prints the exact edits.",
+    accent: "lavender",
+    glyph: "Aa",
+  },
+  {
+    href: "/design-lab/colors",
+    title: "Colors",
+    blurb: "The pastel + ink palette, the gradient, and click-to-copy CSS variables.",
+    accent: "coral",
+    glyph: "◖◗",
+  },
+  {
+    href: "/design-lab/tokens",
+    title: "Tokens",
+    blurb: "Spacing, radii, shadows, and live motion curves you can replay.",
+    accent: "mint",
+    glyph: "{ }",
+  },
+  {
+    href: "/design-lab/animations",
+    title: "Animations",
+    blurb: "Entrance, idle, and hover motion patterns — replayable and annotated.",
+    accent: "sky",
+    glyph: "↻",
+  },
+];
+---
+
+<DesignLabLayout
+  title="Design Lab"
+  active="home"
+  blurb="A private playground for the visual system — type, color, and tokens — kept separate from the real site. Throwaway tooling, delete when no longer needed."
+>
+  <div class="dl-grid">
+    {
+      tools.map((t) => (
+        <a href={t.href} class={`dl-card dl-card--${t.accent}`}>
+          <span class="dl-glyph">{t.glyph}</span>
+          <span class="dl-card-title">{t.title}</span>
+          <span class="dl-card-blurb">{t.blurb}</span>
+          <span class="dl-card-go">Open →</span>
+        </a>
+      ))
+    }
+  </div>
+</DesignLabLayout>
+
+<style>
+  .dl-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .dl-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .dl-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1.5rem 1.25rem 1.25rem;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-edge-strong);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+    transition:
+      transform var(--motion-duration-fast) var(--motion-ease-out),
+      border-color var(--motion-duration-fast) var(--motion-ease-out);
+  }
+  .dl-card:hover {
+    transform: translateY(-3px);
+  }
+  .dl-card--lavender:hover { border-color: var(--color-pastel-lavender-deep); }
+  .dl-card--coral:hover { border-color: var(--color-pastel-coral-deep); }
+  .dl-card--mint:hover { border-color: var(--color-pastel-mint-deep); }
+  .dl-card--sky:hover { border-color: var(--color-pastel-sky-deep); }
+
+  .dl-glyph {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 2rem;
+    line-height: 1;
+    margin-bottom: 0.35rem;
+  }
+  .dl-card--lavender .dl-glyph { color: var(--color-pastel-lavender-deep); }
+  .dl-card--coral .dl-glyph { color: var(--color-pastel-coral-deep); }
+  .dl-card--mint .dl-glyph { color: var(--color-pastel-mint-deep); }
+  .dl-card--sky .dl-glyph { color: var(--color-pastel-sky-deep); }
+
+  .dl-card-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--color-ink);
+  }
+  .dl-card-blurb {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--color-ink-muted);
+    line-height: 1.5;
+  }
+  .dl-card-go {
+    margin-top: 0.4rem;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-ink-soft);
+  }
+</style>
