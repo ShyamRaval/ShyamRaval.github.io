@@ -9,6 +9,7 @@ publishedAt: 2026-04-30
 links:
   github: https://github.com/ShyamRaval/ShyamRaval.github.io
 ---
+import Media from "../../../components/Media.astro";
 
 This portfolio is the project. It started as a question: *what would a
 personal site look like if every element had to earn its place?* No
@@ -24,6 +25,14 @@ The result is a white canvas with soft pastel accents, a tri-font
 typographic system, and navigation that lives where your thumb actually
 rests on a phone.
 
+<Media
+  id="projects/oasis-portfolio/mood-board"
+  alt="Mood board of pastel swatches, paper textures, and a vintage handheld device"
+  width={896}
+  height={504}
+  class="block w-full rounded-[var(--radius-card)] border border-[color:var(--color-edge)]"
+/>
+
 ## What makes it tick
 
 - **Astro + islands** so the page ships almost no JavaScript by default.
@@ -32,6 +41,14 @@ rests on a phone.
   little folder that holds only text.
 - A single `<Media />` component as the only image entry point, so
   switching to a CDN later is a one-file change.
+
+<Media
+  id="projects/oasis-portfolio/architecture"
+  alt="Diagram of the content collections, layouts, and the Media provider abstraction"
+  width={896}
+  height={504}
+  class="block w-full rounded-[var(--radius-card)] border border-[color:var(--color-edge)]"
+/>
 
 ## The Navigator
 

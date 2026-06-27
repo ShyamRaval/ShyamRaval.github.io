@@ -1,7 +1,8 @@
 # Portfolio Website Plan (Living Document)
 
-This file is the **single source of truth** for how the portfolio should look/work.
-We keep updating it as new requirements arrive — **before** making major implementation changes.
+**PLAN.md** is the living spec — how the portfolio should look and work. Update it **before** major implementation changes.
+
+**[`DECISIONS.md`](DECISIONS.md)** holds the dated log of locked choices and reversals. When you lock or undo something, add a line there.
 
 ---
 
@@ -97,7 +98,7 @@ We design like a small magazine, not a SaaS landing page.
 
 ## Layout Strategy
 
-- **Compactness as a design discipline.** Screen real estate is precious; we minimize forced scrolling. Sections are tight, dense where they can be, breathable where they must be.
+- **Compactness as a design discipline.** Screen real estate is precious; we minimize forced scrolling. Sections are tight, dense where they can be, breathable where they must be — but **breathable ≠ empty**. There is a fine line between cluttered and wastefully sparse; we aim to walk that line (see **Display & viewport discipline** below).
 - **Distinct strategies for mobile vs desktop** — not pure responsive scaling. Desktop leans into **asymmetric, editorial multi-column** compositions (e.g. handwritten section label on one side, content on the other). Mobile collapses to a deliberate single-column reading flow with the labels stacking above content.
 - **Whitespace earns its keep.** Padding and margin exist to aid readability and rhythm, never to pad time on page.
 - **No horizontal-rule section dividers.** Section boundaries are communicated by **handwritten margin labels + whitespace**, not by generic `border-top` lines between adjacent components.
@@ -125,11 +126,78 @@ We design like a small magazine, not a SaaS landing page.
     - **Don't put updating info under the finger.** All dynamic content (the highlight, the active handle, the handwritten note) lives on the screen at the top of the device. The wheel-spinning thumb sits at the bottom and never overlaps the changing region.
     - **Discoverability of rotation.** The wheel caps are clickable buttons that work even if the user never figures out the spin gesture. Direct row tap is always available as a safe fallback.
     - **Material vocabulary, expanded.** Vintage handheld devices: the iPod (screen + click-wheel + centre button), the Walkman (cream paper-plastic finish, dashed paper dividers), the Etch-A-Sketch (a knob-driven pointer moving across a closed screen), and the rotary phone (circular thumb spin). These references sit naturally alongside the stationery vocabulary (paper, ink, handwriting) — they're the same tactile-object world, just with mechanism.
-    - **Future hooks (deferred — see Decisions Log).** The data-action dispatcher pattern on the wheel caps is intentionally extensible: a music-player mode and small UX sounds are planned but **not implemented in this pass**. We let the core navigation interaction mature first.
+    - **Future hooks (deferred — see [`DECISIONS.md`](DECISIONS.md)).** The data-action dispatcher pattern on the wheel caps is intentionally extensible: a music-player mode and small UX sounds are planned but **not implemented in this pass**. We let the core navigation interaction mature first.
     - Player uses `role="dialog"` and is `aria-modal="true"` only when the backdrop is present (touch). Body scroll is locked only on touch. On touch, the device auto-collapses across an Astro view transition (so the destination page isn't hidden behind it); on a fine-pointer device it is persisted and left exactly as the user left it (no tuck-away flash on navigation).
     - **Why this design?** Earlier attempts each failed in a specific way: the always-visible two-row strip fought content for real-estate; the bookmark-sheet was too conventional; the rotary dial put orbiting items on the rotating surface and tanked the frame rate. The Navigator separates the **gesture surface** (the wheel — does very little work, just spins) from the **data surface** (the screen — where items live as plain readable text). That split is what makes the gesture feel like a real device.
   - The Navigator is the single most important interactive element on the site. It is the **only** primary navigation surface on either device.
 - **`<DesignFor("iPod click wheel"))>` is now adopted on both desktop and mobile**, paired with a screen-with-pointer (Etch-A-Sketch) model so items are always readable text — not orbiting graphics — and direct row tap remains a safe fallback for any user who never spins the wheel.
+
+---
+
+## Display & viewport discipline
+
+Every layout, margin, and padding decision must account for **how** the visitor is viewing the page — not just **how wide** it is.
+
+### Viewport shapes we design for
+
+| Shape | Typical devices | Layout bias |
+|-------|-----------------|-------------|
+| **Tall / narrow** | Smartphones in portrait | Single column; thumb-zone controls; tighter vertical media caps so letterboxing doesn't dominate |
+| **Balanced** | Laptops, tablets in landscape, small desktops | Editorial measure for text; media may break out wider than prose |
+| **Wide** | Monitors, TVs, ultrawide | Media uses horizontal real estate first; avoid arbitrary `max-width` caps that leave dead side gutters |
+| **Square-ish** | Tablets in portrait, some foldables | Compose between tall and balanced rules; test both orientations |
+
+These are **aspect-ratio** concerns. A 27″ monitor and a phone can share the same CSS pixel width in a narrow window — **width alone is never enough**. Prefer `svh`/`dvh`, `min-aspect-ratio` / `max-aspect-ratio`, and container-relative sizing over fixed `rem` caps that ignore viewport shape.
+
+### Size, density, and pixels
+
+- **Physical size ≠ CSS pixels.** A laptop and a 4K monitor may report similar layout widths; a phone may report a wide layout width in landscape. Design in **flow and proportions**, not one mockup width.
+- **Pixel density (DPR).** Raster images go through Astro `<Image />` / `<Media />` with explicit dimensions; vectors and tokens scale cleanly. Touch targets stay ≥ 44px in **CSS pixels**, not device pixels.
+- **Safe areas.** Respect `env(safe-area-inset-*)` on notched phones; the Navigator already accounts for bottom insets — any new fixed chrome must too.
+- **Scrollbar stability.** `scrollbar-gutter: stable` on `html` prevents horizontal jump between routes; keep it when adding new full-bleed layouts.
+
+### The clutter ↔ waste fine line
+
+- **Cluttered** = too many competing elements, unreadable measure, chrome that eats content, decoration without purpose.
+- **Wasteful** = oversized gutters, media capped far below available width/height, breakout lanes that don't actually break out, padding that exists only because a template defaulted to it.
+- **Our target** = every pixel of margin or padding answers a readability or rhythm question; every unused region of the viewport is a **bug to investigate**, not a style choice — unless we deliberately left it quiet for editorial breathing room (and we can say why).
+
+When auditing a layout, ask:
+
+1. On **ultrawide**, is media using the breakout lane or sitting in a narrow strip?
+2. On **tall narrow**, is media height capped so the page doesn't become one small rectangle in a sea of margin?
+3. Would a **branch-specific** rule (e.g. `max-aspect-ratio: 9/16`) serve this component better than a single global cap?
+4. Does this still read at **200% zoom** and with **reduced motion**?
+
+Branch for specifics when one rule doesn't fit all — but **never** waste real estate just to avoid clutter. Tighten the component, not the viewport.
+
+### Media sizing contract (MDX — deferred)
+
+**Production today:** blog posts and case studies use `.container-prose` (48rem max) + `.prose` in `BlogPostLayout` / `ProjectLayout`. Inline images use `<Media />` at full column width.
+
+**Next audition (when we retry):** widescreen article layout + MDX media chrome (Video / GIF / Audio players, breakout lane, viewport-aware `--media-max-h`). Those experiments will live under `src/styles/design-lab/` and a lab page — not in production — until explicitly promoted per **Design Lab workflow** below.
+
+---
+
+## Design Lab workflow (experiment → promote → prune)
+
+**`/design-lab/*` is the only place we audition unfinished layout and component work.** The shipping site (`BaseLayout`, `BlogPostLayout`, `ProjectLayout`, `global.css`) stays stable until an experiment is explicitly promoted.
+
+### Rules
+
+1. **Experiment in isolation.** New layout, media chrome, or motion prototypes get **lab-only files** under `src/styles/design-lab/` (and lab pages under `src/pages/design-lab/`). Do **not** add audition CSS to `global.css` or production layouts until promoted.
+2. **Design Lab shares tokens only until an experiment ships.** `DesignLabLayout.astro` imports `global.css` (same tokens + utilities as production). When auditioning new CSS, add lab-only sheets under `src/styles/design-lab/` and import them from `DesignLabLayout` — **not** from `global.css` until promoted.
+3. **Promote when perfect.** When an experiment is approved: move the minimal rule set into the production path (`global.css`, layouts, shared components), wire production pages, then **delete or slim** the lab copy.
+4. **Prune the lab after promotion.** Remove obsolete classes, dead `@import`s, and demo-only markup from Design Lab so it doesn't become a second source of truth.
+5. **Components may exist in `src/components/` before promotion** (e.g. MDX primitives) — but their **styles and layout contracts** stay in lab sheets until shipped. JS that only runs from lab pages is acceptable; global CSS side effects are not.
+
+### Checklist before promoting out of Design Lab
+
+- [ ] Tested tall phone, tablet (portrait + landscape), laptop, ultrawide
+- [ ] No regressions at 200% zoom; `prefers-reduced-motion` respected
+- [ ] Production layout file updated (not just CSS moved)
+- [ ] Lab duplicate removed; `index.css` `@import` dropped
+- [ ] `DECISIONS.md` entry added
 
 ---
 
@@ -166,7 +234,7 @@ We design like a small magazine, not a SaaS landing page.
 - `src/data/timeline.ts` — timeline entries shown on Home.
 - `src/data/tech-logos.ts` — logo/cloud metadata consumed by `LogoCloud.astro`.
 - `src/data/certificates.ts` — certificate metadata (stored, **not rendered in v1**).
-- `public/resume.pdf` — resume file served as a static asset.
+- Resume PDF path + download filename in `site.ts` (`resume.pdfPath`); file lives in `public/` and is served as-is.
 
 ### Content (changes often)
 
@@ -235,75 +303,31 @@ Only **chrome-level** images — favicons, OG default, header brand mark — i.e
 - **MDX inline images** in posts use `<Media id="..." ... />`, never a raw `<img>` tag.
 - **Missing `cover` / `thumbnail` fallback**: cards still call `<Media />` with a deterministic `placeholder/...` ID (e.g. `placeholder/blog/<slug>`). In v1 the provider resolves it to a pastel `placehold.co` PNG. Card gradient backgrounds (CSS) and the fallback image (content slot) remain separate concerns.
 - **Performance defaults**: explicit `width`/`height`, `alt`, `loading="lazy"` + `decoding="async"` for below-the-fold.
-- **Public folder** is reserved for assets that must be served untouched (e.g. `resume.pdf`, `favicon.ico`).
+- **Public folder** is reserved for assets that must be served untouched (e.g. resume PDF, `favicon.ico`).
 
 ---
 
-## Folder Layout (current)
+## Where things live (mental map)
 
-```
-src/
-  layouts/
-    BaseLayout.astro
-    BlogPostLayout.astro
-    ProjectLayout.astro
-    DesignLabLayout.astro   # throwaway: shell for the /design-lab dev tools (noindex)
-  components/
-    Header.astro            # thin strip rendering a marginalia line; no nav
-    Navigator.astro         # the one Navigator: screen (wander | say hello) + click-wheel
-    Section.astro
-    ProjectCard.astro
-    BlogCard.astro
-    Timeline.astro
-    LogoCloud.astro
-    Icon.astro              # the ONLY SVG-icon entry point; resolves src/lib/icons.ts
-    Media.astro             # the ONLY image entry point; wraps Astro <Image />
-  lib/
-    media.ts                # resolveMediaUrl(id) — swap providers here
-    content.ts              # typed query helpers over the content collections
-    navigator-data.ts       # derives Navigator social rows from site data
-    icons.ts                # icon-name registry/type backing Icon.astro
-    accents.ts              # pastel-accent helpers shared by cards
-  pages/
-    index.astro             # Home = hero + about + timeline + featured projects
-    projects/
-      index.astro
-      [slug].astro
-    blog/
-      index.astro
-      [slug].astro
-    resume.astro
-    404.astro
-    design-lab/             # THROWAWAY dev tooling — not part of the shipping site
-      index.astro           #   hub linking the sub-tools
-      fonts.astro           #   live font auditioning
-      colors.astro          #   palette reference (click-to-copy)
-      tokens.astro          #   spacing / radii / shadows / motion tokens
-      animations.astro      #   replayable motion patterns
-  content/
-    blog/
-      <slug>/
-        index.mdx           # self-contained: only text + identifier strings
-    projects/
-      <slug>/
-        index.mdx
-  data/
-    site.ts
-    timeline.ts
-    tech-logos.ts
-    certificates.ts
-    marginalia.ts           # rotating handwritten header lines
-  assets/                   # chrome-level only (favicon, OG default, brand mark)
-    logos/
-  styles/
-    global.css
-  content.config.ts
-public/
-  resume.pdf                # served untouched
-  favicon.svg / favicon.ico
-```
+Quick orientation — not a file-by-file inventory (use the repo for that).
 
-> **`/design-lab/*` is throwaway tooling, not product.** It is `noindex`, has no inbound links from the site, and exists only to audition fonts/colours/tokens/animations during development. It can be deleted before launch with zero impact on the shipping pages.
+| Area | Location | Notes |
+|------|----------|--------|
+| **Site shell** | `src/layouts/BaseLayout.astro` | Header, Navigator, ClientRouter, `global.css` |
+| **Long-form posts** | `src/layouts/BlogPostLayout.astro`, `ProjectLayout.astro` | `.container-prose` + `.prose` around MDX |
+| **UI building blocks** | `src/components/` | `Navigator`, `Media`, cards, sections, etc. |
+| **Shared logic** | `src/lib/` | Media provider, content queries, icons, accents |
+| **Routes** | `src/pages/` | Thin pages; dynamic `[slug].astro` for blog + projects |
+| **Design tokens** | `src/styles/global.css` | Production and Design Lab both import this |
+| **MDX content** | `src/content/{blog,projects}/<slug>/index.mdx` | Folder name = slug; text only, no image bytes |
+| **Site data** | `src/data/` | Nav, socials, timeline, marginalia, etc. |
+| **Schemas** | `src/content.config.ts` | Zod frontmatter for collections |
+| **Static assets** | `public/` | Favicon, resume PDF — served untouched |
+| **Throwaway tooling** | `src/pages/design-lab/` + `DesignLabLayout.astro` | `noindex`; delete before launch with no product impact |
+
+Config at repo root: `astro.config.mjs`, `package.json`, `.env.example`. Living docs: `PLAN.md`, `DECISIONS.md`.
+
+> **`/design-lab/*` is throwaway tooling, not product.** It is `noindex`, has no inbound links from the site, and exists to audition fonts, colours, tokens, and motion during development. New layout or MDX experiments get **isolated files** under `src/styles/design-lab/` (created when needed) and optional lab pages — nothing graduates to production until explicitly promoted (see **Design Lab workflow**). Delete `src/pages/design-lab/` + `DesignLabLayout.astro` before launch with zero impact on shipping pages.
 
 ---
 
@@ -368,8 +392,8 @@ Stored only; **not rendered in v1**.
 ## Resume Page
 
 - Route: `/resume`
-- Render `public/resume.pdf` with a native `<object>` first, with an `<iframe>`/link fallback inside the object body for browsers that cannot display PDFs inline.
-- Include a prominent download button: `<a href="/resume.pdf" download>`.
+- Render the PDF from `site.resume.pdfPath` (file in `public/`) with a native `<object>` first, with an `<iframe>`/link fallback inside the object body for browsers that cannot display PDFs inline.
+- Include a prominent download button using `site.resume.downloadName`.
 - Do **not** render certificates in v1.
 
 ---
@@ -433,72 +457,6 @@ Stored only; **not rendered in v1**.
 - Deployment can use GitHub Actions after the first stable implementation pass.
 
 ---
-
-## Decisions Log
-
-- **2026-04-30** — Adopted separation: design vs structure vs data vs content.
-- **2026-05-26** — Visual tone: white-first, all-out colorful; no dark-mode toggle.
-- **2026-05-26** — Separate routed pages with Astro View Transitions for no-reload navigation.
-- **2026-05-26** — Projects rendered as cards → case-study pages (not lists).
-- **2026-05-26** — Blog and Projects are separate sections, both backed by MDX collections.
-- **2026-05-26** — Resume page embeds PDF + download button; certificates stored in data but **not rendered**.
-- **2026-05-26** — Content engine: **MDX** (best fit for images + dynamic components).
-- **2026-05-26** — Design tokens centralized in `src/styles/global.css` (Tailwind v4 `@theme` + CSS variables).
-- **2026-05-26** — Animations: all-out but optimized; CSS-first; `prefers-reduced-motion` respected.
-- **2026-05-26** — **Home = About me + Timeline.** No dedicated `/about` page; no separate `/timeline` page.
-- **2026-05-26** — **Footer holds email + socials only** (no nav links, no contact form, no `/contact` page).
-- **2026-05-26** — **Accent palette: soft pastels + playful gradients.** Dropped the "desert / sand / beach" metaphor — pastels only.
-- **2026-05-26** — **Astro `<Image />` is a hard requirement** for every raster image across the site.
-- **2026-05-26** — **Folder-per-entry content collections**: each blog post / project is `src/content/<col>/<slug>/index.mdx`. Slug = folder name.
-- **2026-05-26** — **Post folders hold no image bytes.** Images are referenced as **stable string identifiers** in frontmatter and body — preserving both self-contained posts *and* single-source-of-truth for shared images.
-- **2026-05-26** — **One `<Media />` component wraps Astro `<Image />`** and dispatches to a provider chosen by `PUBLIC_MEDIA_PROVIDER`. Provider swap is a one-file change in `src/lib/media.ts`.
-- **2026-05-26** — **v1 image provider: picsum.photos** with seeded IDs (placeholder). **Future provider: Cloudinary** — architecture is already shaped for it, no Cloudinary code in v1.
-- **2026-05-26** — `src/assets/` is reserved for **chrome-level** images only (favicon, OG default, brand mark). Content images never live in the repo.
-- **2026-05-26** — `astro.config.mjs` whitelists `picsum.photos` and `placehold.co` (and `res.cloudinary.com` pre-emptively) under `image.remotePatterns`.
-- **2026-05-26** — Dynamic content routes use single-segment `[slug].astro` pages, matching folder-per-entry slugs.
-- **2026-05-26** — Resume PDF rendering uses native `<object>` with fallback content plus a download button.
-- **2026-05-26** — Missing blog/project media falls back to a deterministic `placehold.co` PNG via `<Media />` (still satisfies the Astro `<Image />` rule).
-- **2026-05-26** — Deployment target is GitHub Pages at `https://shyamraval.github.io` with root base path.
-- **2026-05-26** — **Gradients are pure CSS theming**; content images (photos, screenshots, covers) travel through `<Media />` and stay independent of the gradient styling.
-- **2026-05-26** — **No sitemap and no RSS feed in v1.**
-- **2026-05-26** — **Design philosophy: every element earns its place.** Reject default portfolio patterns (3-card "values" rows, hero CTA pairs, generic footers). We do not chase the user.
-- **2026-05-26** — **Tri-font typography system**: *Instrument Serif* (display, expressive), *Inter* (body, highly readable), *Caveat* (handwritten accent, used sparingly).
-- **2026-05-26** — **Compactness is a design discipline.** Distinct mobile vs desktop layouts (not pure responsive scaling) — desktop leans editorial/asymmetric, mobile is a single-column reading flow.
-- **2026-05-26** — **Footer renders as a Navigator** (icons-only socials + email pill at the bottom of the viewport). No nav, no copy, no copyright.
-- **2026-05-26** — **No large background gradient washes** (`.bg-oasis` removed). Gradients live only in text and small chrome.
-- **2026-05-26 (pm)** — **Real-life material language locked in**: polaroids, paper tabs, handwritten margins, future room for washi tape / stamps / sticky notes. Stays inside the personal-stationery world. Timeless over trendy.
-- **2026-05-26 (pm)** — **Handwritten font (Caveat) is locked.** We are not searching for a replacement.
-- **2026-05-26 (pm)** — **No horizontal-rule section dividers.** Removed `border-t` between adjacent sections; whitespace + handwritten margin labels do the separating.
-- **2026-05-26 (pm)** — **Cards size to their own content** in any grid (no row-stretching to match the tallest sibling).
-- **2026-05-26 (pm)** — **Navigation renders as notebook-style paper tabs**; active tab is "pulled forward" into the page surface.
-- **2026-05-26 (pm)** — **Navigator was two-state** (retired design): resting textual invitation → active row of icons → per-icon floating "business card" tooltip. Icon hover colors echo each brand's signature color. On touch devices the Navigator skips the resting state and exposes icons directly.
-- **2026-05-27** — **Minimum thumb travel is a design principle.** Top-of-screen primary navigation is rejected on mobile because thumbs don't comfortably reach there on tall phones.
-- **2026-05-27** — **Header carries only a rotating "marginalia" line** (handwritten, picked per session). No name, no logo, no nav.
-- **2026-05-27** — **Paper-tab header navigation is retired.** The pattern may still appear for contextual navigation elsewhere (e.g. project category filters) but is no longer the primary nav surface.
-- **2026-05-27** — **Primary navigation moves into the Navigator**, sharing one shell with socials. Layout: `[ nav | divider | socials ]`. Same two-state mechanic, same business-card tooltips, same touch-drag pattern. The Navigator is the single most important interactive element on the site.
-- **2026-05-27** — **Home link becomes a monogram icon ("S" in display italic)** as the first item in the Navigator's left zone. The site name is no longer displayed anywhere in the chrome.
-- **2026-05-27** — **iPod click-wheel / d-pad navigation considered and rejected** for primary nav (discoverability, accessibility, theme drift). Reserved as a possible future easter-egg page where it can be delightful without carrying load.
-- **2026-05-29** — **Mobile Navigator redesigned: bookmark tab → notebook sheet.** The always-visible two-row mobile Navigator and the press-and-hold-and-drag interaction are retired. Mobile now shows a small paper-bookmark tab pinned to the bottom-center edge; tapping it opens a labeled-rows sheet that contains both nav and socials. Press-and-hold-and-drag, the per-icon floating business cards, and the stacked-rows layout no longer exist on touch devices — those affordances stay on desktop only.
-- **2026-05-29** — **Ergonomics over convention is now a first-class design principle** (added to Design Philosophy). Mobile primary controls live at the bottom edge, never the top, because that's where the thumb actually rests on a phone. Paired actions (open / close) share the same physical coordinate — the bookmark tab keeps its position when the sheet opens and only swaps face from `chevron-up · "menu"` to `× · "close"`. We will not import top-of-screen nav patterns from the standard portfolio template gallery just because everyone uses them.
-- **2026-05-29 (pm)** — **Mobile Navigator redesigned again: Navigator.** Replaces the rotary-dial attempt, which suffered from per-item nested transforms (every drag frame restyled all 8 items + their gradients/shadows) and didn't hold the design language. The Navigator splits the **gesture surface** (a click-wheel that just rotates, carrying no items) from the **data surface** (a small LCD-tinted screen above the wheel, holding items as a plain text list with a fixed centre highlight band). Spinning the wheel translates the list past the band; the active row's handwritten footer updates only on snap. References, intentionally expanded: **iPod** (screen + click-wheel + centre button), **Walkman** (cream paper-plastic finish), **Etch-A-Sketch** (knob-driven pointer across a closed screen), **rotary phone** (circular thumb spin). The previous "iPod-style click wheel rejected for primary nav" decision is superseded by this one, because the discoverability concern is now solved by the screen-with-pointer model and by always-tappable rows as a fallback.
-- **2026-05-29 (pm)** — **Mobile Navigator has a dedicated close affordance.** A clearly labeled **×** button in the top-right of the Navigator's status bar joins the existing dim backdrop and Escape key as three independent dismiss paths. Universal mental model; never depends on the user remembering an unconventional gesture.
-- **2026-05-29 (pm)** — **Performance is now an explicit contract for the mobile Navigator.** During any drag, only two elements may animate: the wheel arc (`transform: rotate`) and the items list (`transform: translateX`). No per-item transforms, no per-item box-shadows, no DOM text mutations during the drag itself, no synchronous style writes inside `pointermove` (all writes RAF-batched). Heavy decorative effects (inner ring shadow) are dropped under `.is-dragging`. This is a load-bearing rule: the Navigator is the most-touched interaction on the site and must feel like a real device, not a fragile demo.
-- **2026-05-29 (pm)** — **Material vocabulary expanded** from "stationery / journaling" to "stationery + vintage handheld devices". The two worlds share the same tactile, paper-cream, ink-and-handwriting finish — they read as a single coherent world rather than two metaphors competing for attention.
-- **2026-05-30** — **Navigator adopted on desktop too; the two-zone floating pill is retired.** The desktop Navigator is now the *same component* as the mobile Navigator — same markup, same controller, same brand colours. Only the position differs: bottom-LEFT on desktop (so it stays out of the way of centred long-form content), bottom-CENTRE on mobile. The previous "expand-on-hover pill" hover-to-grow vocabulary is preserved in spirit: the closed desktop state shows only a small monogram puck peeking out of the corner, and hovering or focusing the puck "pulls the device out of the pocket" with the same family of transitions. Wheel control on desktop accepts mouse drag and mouse-wheel / touchpad scroll. Page hit-testing is unaffected — the shell carries no invisible hit area; only the visible peek and the visible device are interactive.
-- **2026-05-30** — **Wheel controller rewritten — 5 user-reported defects addressed in one pass.** (1) Janky 180° flip-to-origin: replaced absolute-from-start angle math with **incremental angle delta** between successive `pointermove` events; the wheel can now be spun continuously through any number of rotations without ever resetting. (2) Wheel freezing at the end of the list: the wheel rotation accumulator is now **unbounded**; only the items-list translation is clamped + rubber-banded so the user feels the edge while the wheel itself keeps spinning visually. (3) Description updates only on release: the screen footer now updates **live during the drag** at every detent crossing (naturally rate-limited to one cheap `textContent` write per real row, no thrash). (4) Wheel too small relative to the device: wheel grew from `~7.5–8.5rem` to `12.4rem` on desktop and proportionally on mobile — it now reads as the device's *primary* control. (5) UI clutter: the top status bar (handwritten "menu" label + dedicated × close button) is **removed entirely**; its responsibilities migrated into the wheel itself (the `menu` cap is now the close, the active row's name lives on the screen).
-- **2026-05-30** — **Compass cap labels are real `<button>`s with honest actions.** `menu` (top) closes the player, right (skip-forward) steps to the next item, `play` (bottom) activates the highlighted item, left (skip-back) steps to the previous item. The centre button also activates the highlighted item — faithful to a real iPod. We will not ship UI elements that "don't do anything".
-- **2026-05-30** — **Pointer Events used throughout the wheel** (touch / mouse / pen all run through one code path), with `setPointerCapture` so the gesture survives the cursor leaving the wheel rim. The wheel additionally listens for mouse-wheel / touchpad-scroll input as a no-drag alternative for trackpad users. RAF-batched style writes; no synchronous style work inside `pointermove`.
-- **2026-05-30** — **Music-player mode and small UX sounds are designed-for, not implemented.** The `data-action` dispatcher pattern on the wheel caps already accepts new actions (`pause`, `next-track`, etc.) without markup churn. Audio cues will subscribe to a future `navigator:active` / `navigator:detent` event from the controller. **We let the core navigation interaction mature first** before layering in music or sound — explicit user direction.
-- **2026-06-09** — **Navigator position is now orientation-based, not device-based** (supersedes the 2026-05-30 "desktop = left / mobile = centre" framing). Landscape & square viewports (`min-aspect-ratio: 1/1`) tuck the device bottom-LEFT; portrait viewports — **including a portrait desktop window** — anchor it bottom-CENTRE for thumb reach. Position (orientation) and interaction (input capability) are now fully independent concerns that compose freely (e.g. a landscape touch tablet gets the left tuck *and* the backdrop).
-- **2026-06-09** — **Fine-pointer Navigator: hover opens, and it stays open** (supersedes the 2026-05-30 "260ms grace timer tucks it back on cursor-away"). Once pulled out it closes **only** on a click outside its bounds or the Escape key — never on hover-out — so an in-bounds action (spinning the wheel, picking an item) can't accidentally dismiss it. Touch behaviour is unchanged (tap puck to raise over a backdrop; backdrop / outside-tap / Escape to dismiss).
-- **2026-06-09** — **Wheel caps re-mapped; the `menu`/close cap is retired.** `play` moved to the **top**, `back` is the **bottom** cap (swapping the old `menu`-top / `play`-bottom layout). With no in-device close control, dismissal is handled entirely by clicking/tapping outside the device (or Escape / backdrop). We will not ship a redundant in-device close button.
-- **2026-06-09** — **The `back` cap is browser-history back, not a menu action.** It calls `history.back()` (one real step in the visitor's own navigation, animated by ClientRouter; cold deep-links fall back to the parent route). Because it is not a list move, the menu-boundary "tug" bounce is explicitly **not** fired for it.
-- **2026-06-09** — **View-transition flicker on persistent chrome fixed.** Only `<main>` animates between routes (`transition:animate="fade"`); `Header` + `Navigator` use `transition:persist` **without** a `transition:name`, and the `root` crossfade is disabled (`::view-transition-old/new(root){ animation:none }`). The earlier `transition:name` on chrome was the cause of the "device rebuilds itself on navigation" flicker — it lifted the persisted element into its own animated snapshot group. On touch, the device auto-collapses across a transition; on desktop it persists exactly as left.
-- **2026-06-09** — **`scrollbar-gutter: stable` on `html`** reserves the scrollbar's width on every route, eliminating the sideways content jump between scrolling and non-scrolling pages. No-op on overlay-scrollbar systems.
-- **2026-06-09** — **Design Lab (`/design-lab` + `DesignLabLayout`) added as throwaway, `noindex` dev tooling** (grew out of the old `font-lab.astro`, which is deleted). Sub-tools: `fonts`, `colors`, `tokens`, `animations`, plus an index hub. It has no inbound links from the shipping site and can be deleted before launch with zero product impact.
-- **2026-06-09** — **Display font audition: Newsreader trialled site-wide, then reverted to *Instrument Serif*.** The tri-font system is unchanged; the experiment lives on only in `/design-lab/fonts`.
-- **2026-06-09** — **Shared helpers split out under `src/lib/`** (`content.ts`, `navigator-data.ts`, `icons.ts`, `accents.ts`) and a single `Icon.astro` SVG entry point added — direct application of the DRY / single-source-of-truth rule as the Navigator and content pages grew.
-- **2026-06-09** — **Fixed: first outside-click after a navigation didn't minimize the desktop Navigator.** On close, the controller restores focus to the puck for keyboard users; on a fine-pointer device the puck's `focusin` "open" handler then re-fired immediately, so the first outside click closed-and-reopened in one turn (read by the user as the menu just "twitching"). A short-lived `suppressFocusOpen` guard now wraps that intentional focus restore, so the focus event can't re-open the device — one outside click closes it and it stays closed.
 
 ## Open Questions
 
