@@ -55,19 +55,19 @@ export interface SiteData {
 }
 
 export const site: SiteData = {
-  name: "Shyam Raval",
-  shortName: "Shyam",
-  monogram: "S",
+  name: "Raval Dinesh",
+  shortName: "Dinesh",
+  monogram: "D",
   tagline: "An oasis of code, craft, and curiosity.",
-  bio: "I build calm, colorful interfaces and the systems behind them. Currently exploring delightful UX, design systems, and Astro-powered sites that load fast and feel friendly.",
+  bio: "I innovate meaningful and robust systems. Currently exploring potential of AI/ML to enhance user experience and productivity.",
   url: "https://shyamraval.github.io",
-  email: "hello@shyamraval.dev",
+  email: "hello@dineshraval.dev",
   nav: [
     {
       label: "home",
       href: "/",
       icon: "monogram",
-      handle: "Shyam Raval",
+      handle: "Raval Dinesh",
       hand: "back to the start",
     },
     {
@@ -94,14 +94,14 @@ export const site: SiteData = {
   ],
   socials: [
     { label: "GitHub", href: "https://github.com/ShyamRaval" },
-    { label: "LinkedIn", href: "https://www.linkedin.com/in/shyamraval/" },
-    { label: "X / Twitter", href: "https://x.com/" },
+    { label: "LinkedIn", href: "https://www.linkedin.com/in/dkraval" },
+    // { label: "X / Twitter", href: "https://x.com/" },
   ],
   seo: {
-    titleTemplate: "%s — Shyam Raval",
-    defaultTitle: "Shyam Raval — Portfolio",
+    titleTemplate: "%s — Raval Dinesh",
+    defaultTitle: "Raval Dinesh — Portfolio",
     defaultDescription:
-      "Personal portfolio of Shyam Raval — projects, writing, and experiments.",
+      "Personal portfolio of Raval Dinesh — projects, writing, and experiments.",
     ogImage: "/og-default.png",
   },
   resume: {

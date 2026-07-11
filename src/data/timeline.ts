@@ -18,28 +18,28 @@ export const timeline: TimelineEntry[] = [
     year: "2026",
     title: "Started this portfolio",
     description:
-      "Designed an oasis-themed personal site with a focus on calm pastels, fast navigation, and self-contained content.",
+      "Designed a minimalistic personal site with a focus on meaningful content, fast navigation, and self-contained content.",
     kind: "project",
   },
   {
     year: "2025",
-    title: "Diving into design systems",
+    title: "Started working at Shievon.in as a Software Developer",
     description:
-      "Built component libraries and explored Tailwind v4 tokens, motion design, and accessibility patterns.",
-    kind: "milestone",
-  },
-  {
-    year: "2024",
-    title: "Shipping with Astro",
-    description:
-      "Rebuilt multiple projects on Astro for blazing static performance and View Transitions.",
+      "Started working at Shievon.in as a Software Developer.",
     kind: "work",
   },
   {
-    year: "2023",
-    title: "Learning, always learning",
+    year: "2022",
+    title: "Started my B.E in Information Technology",
     description:
-      "Deepened in TypeScript, browser internals, and the joy of small, well-shaped tools.",
+      "Started my B.E in Information Technology at LJ university, Ahmedabad.",
+    kind: "education",
+  },
+  {
+    year: "2019",
+    title: "Started my diploma in Computer Engineering",
+    description:
+      "Started my diploma in Computer Engineering at Government Polytechnic, Ahmedabad.",
     kind: "education",
   },
 ];
