@@ -40,6 +40,9 @@
   --spacing-section-lg: 5rem;
   --spacing-gutter: 1.25rem;
 
+  /* Minimized Navigator puck — gap between content and puck; height is measured in JS */
+  --nav-puck-gap: 0.65rem;
+
   /* Radii */
   --radius-tight: 0.5rem;
   --radius-card: 0.875rem;
@@ -92,6 +95,19 @@
      * sideways jump between routes. No-ops on overlay-scrollbar systems
      * (macOS / mobile), where there's nothing to reserve. */
     scrollbar-gutter: stable;
+    /* Fallback until Navigator measures the resting puck (see Navigator.astro) */
+    --nav-clearance: calc(
+      4.6rem + var(--nav-puck-gap) + env(safe-area-inset-bottom, 0px)
+    );
+    scroll-padding-bottom: var(--nav-clearance);
+  }
+
+  @media (min-aspect-ratio: 1/1) {
+    html {
+      --nav-clearance: calc(
+        1rem + 4.6rem + var(--nav-puck-gap) + env(safe-area-inset-bottom, 0px)
+      );
+    }
   }
 
 body {
@@ -101,15 +117,8 @@ body {
     min-height: 100svh;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* The Navigator sits bottom-CENTRE in portrait and bottom-LEFT in
-     * landscape/square (see the Navigator's orientation rules below).
-     * Portrait needs clearance for the centred puck at the bottom edge;
-     * landscape only needs a small breathing margin since the puck
-     * tucks into the corner clear of centred content. */
-    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
-  }
-  @media (min-aspect-ratio: 1/1) {
-    body { padding-bottom: 1.5rem; }
+    /* Reserve space for the minimized puck — bottom only, never top */
+    padding-bottom: var(--nav-clearance);
   }
 
   h1, h2, h3, h4 {
@@ -226,9 +235,9 @@ body {
     border-color: var(--color-edge-strong);
   }
 
-  /* Section spacing */
-  .section { padding-block: var(--spacing-section); }
-  .section-lg { padding-block: var(--spacing-section-lg); }
+  /* Section spacing — top rhythm only; bottom clearance is body padding (Navigator) */
+  .section { padding-top: var(--spacing-section); padding-bottom: 0; }
+  .section-lg { padding-top: var(--spacing-section-lg); padding-bottom: 0; }
 
   /* In-text underline that grows on hover â€” quiet link affordance */
   .link-underline {

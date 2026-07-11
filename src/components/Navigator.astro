@@ -385,6 +385,32 @@ const seedNote = firstNav?.hand ?? "";
       rowCentersReady = true;
     };
 
+    /** Sync `html { --nav-clearance }` to the resting puck's footprint so
+     *  body padding-bottom always matches the minimized Navigator — any
+     *  orientation, zoom, or CSS size change. Only measures while closed
+     *  (the puck transforms when open). */
+    let clearanceRaf = 0;
+    const syncPageClearance = () => {
+      if (shell.dataset.state === "open") return;
+      const rect = puck.getBoundingClientRect();
+      const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const gapProbe = document.createElement("div");
+      gapProbe.style.cssText =
+        "position:absolute;visibility:hidden;height:var(--nav-puck-gap);pointer-events:none;";
+      document.documentElement.appendChild(gapProbe);
+      const gapPx = gapProbe.getBoundingClientRect().height || 0.65 * rootPx;
+      gapProbe.remove();
+      const clearance = Math.ceil(window.innerHeight - rect.top + gapPx);
+      document.documentElement.style.setProperty("--nav-clearance", `${clearance}px`);
+    };
+    const scheduleClearanceSync = () => {
+      if (clearanceRaf) return;
+      clearanceRaf = requestAnimationFrame(() => {
+        clearanceRaf = 0;
+        syncPageClearance();
+      });
+    };
+
     /** Wheel centre in viewport coords — cached so pointermove never
      *  calls getBoundingClientRect (which forces layout every frame). */
     let wheelCx = 0;
@@ -698,6 +724,9 @@ const seedNote = firstNav?.hand ?? "";
             suppressFocusOpen = false;
           }, 0);
         }
+        requestAnimationFrame(() => {
+          requestAnimationFrame(scheduleClearanceSync);
+        });
       }
     };
 
@@ -708,14 +737,21 @@ const seedNote = firstNav?.hand ?? "";
         if (resizeRaf) return;
         resizeRaf = requestAnimationFrame(() => {
           resizeRaf = 0;
-          if (!isOpen) return;
+          if (!isOpen) {
+            scheduleClearanceSync();
+            return;
+          }
           measure();
           refreshWheelCenter();
           snapToDetent(activeIndex);
         });
       });
       ro.observe(frame);
+      ro.observe(puck);
     }
+
+    window.addEventListener("resize", scheduleClearanceSync, { passive: true });
+    window.addEventListener("orientationchange", scheduleClearanceSync, { passive: true });
 
     /* ---------- pointer-driven wheel rotation (mouse + touch) ---------- */
 
@@ -939,6 +975,7 @@ const seedNote = firstNav?.hand ?? "";
     let afterSwapRaf = 0;
     document.addEventListener("astro:after-swap", () => {
       rowCentersReady = false;
+      scheduleClearanceSync();
       // We've now navigated at least once inside the app, so `back` can
       // safely step through real history instead of falling back.
       hasInAppHistory = true;
@@ -968,6 +1005,9 @@ const seedNote = firstNav?.hand ?? "";
     rows[0]?.classList.add("is-active");
     // Fall back to the first item only when no nav row matches (404).
     if (!syncActiveToPath()) writeMeta();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scheduleClearanceSync);
+    });
   };
 
   initNavigator();
