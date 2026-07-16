@@ -1,0 +1,211 @@
+---
+title: InternShip
+summary: A placement portal for LJ University — students apply, companies post roles, and applications stay in one system.
+tags: ["Django", "Python", "SQLite", "Bootstrap"]
+thumbnail: projects/InternShip/thumbnail
+featured: true
+accent: sky
+publishedAt: 2024-03-28
+links:
+  github: https://github.com/ShyamRaval/internSHIP
+---
+
+internSHIP is a full-stack web portal I built during college with a
+batchmate, under the guidance of our HOD at LJ University,
+Ahmedabad. The goal was straightforward: replace the scattered
+spreadsheet-and-email workflow around campus internships with a single
+system where students discover openings, apply with their profile, and
+companies review applicants without chasing files across inboxes.
+
+The Django app inside the repo is called **internLINK** — the project
+name is internSHIP, the application layer is internLINK.
+
+## Stack
+
+- **Django 4.2.5** — server-rendered MVC, no separate frontend framework
+- **SQLite** — development and demo database (`db.sqlite3` ships with the repo)
+- **Bootstrap 5** + **django-crispy-forms** — form layout and responsive UI
+- **Pillow** — profile photo handling
+- **django-phonenumber-field** — validated international phone numbers on user profiles
+
+Python 3.11. Dependencies are pinned in `requirements.txt`.
+
+## Architecture
+
+The system is a classic Django monolith: models define the schema,
+class-based and function views handle request logic, and Django templates
+render HTML. Static assets live under `internLINK/static/`; uploaded
+files (profile photos, resumes) go to a `media/` directory configured
+via `MEDIA_ROOT` and `MEDIA_URL`.
+
+Authentication is built on a **custom user model** (`CustomUser`,
+extending `AbstractUser`) rather than Django's default `User`. This was
+one of the bigger design decisions — it let us attach shared profile
+fields once and branch into role-specific tables:
+
+```
+CustomUser (AbstractUser)
+├── is_student / is_company flags
+├── email, mobile, profile_photo, description, verification
+│
+├── Company (OneToOne → CustomUser)
+│   └── location, website
+│
+└── Student (OneToOne → CustomUser)
+    ├── cgpa, enrollment_no, branch, semester, batch, roll_no
+    ├── resume (FileField), date_of_birth
+    ├── job_status (Employed / Unemployed)
+    └── applied_postings (M2M → JobPosting)
+
+JobPosting (UUID primary key)
+├── FK → Company
+├── title, job_description, salary
+├── deadline_to_apply, bond_period, duration_of_job
+└── ← JobApplication (FK Student + FK JobPosting)
+```
+
+**Why UUIDs for job postings?** Integer IDs leak ordering and count
+information. UUID primary keys on `JobPosting` give stable, non-guessable
+URLs (`/company_profile/<username>/job_profile/<uuid:job_id>/`) without
+exposing how many roles a company has posted.
+
+**Why OneToOne profile tables?** Students and companies share auth
+concerns (login, password, photo) but carry completely different domain
+fields. Splitting profiles into `Student` and `Company` tables keeps the
+schema honest — a company row never has a `cgpa` column sitting empty.
+
+## Data validation
+
+Validation lives at the model layer, not just in forms:
+
+- **CGPA** — `DecimalField` with `MinValueValidator(0)` and
+  `MaxValueValidator(10)`
+- **Batch** — regex `^[A-Z][1-9][0-5]?$` (e.g. `C1`, `E12`)
+- **Semester** — bounded 1–8
+- **Resume uploads** — `FileExtensionValidator` restricting to
+  `pdf`, `doc`, `docx`, `txt`, `rtf`, `epub`, `html`
+- **Phone numbers** — `PhoneNumberField` from django-phonenumber-field
+  with the `phonenumbers` library for parsing and validation
+
+`CustomUserManager` normalizes email on create and enforces
+`create_superuser` defaults (`is_staff`, `is_superuser`).
+
+## Auth and authorization
+
+Registration (`/register/`) uses a single `UserRegistrationForm` with
+`is_student` and `is_company` boolean flags. On save, the view creates
+the matching profile row — `Student(user=user)` or `Company(user=user)` —
+then logs the user in immediately.
+
+Protected views use `@login_required`. Authorization beyond that is
+**manual role checking in views** — patterns like:
+
+- `request.user.is_company and request.user.username == username` before
+  letting a company edit its own postings
+- `JobPosting.objects.filter(job_id=job_id, jobapplication__student__user__username=username).exists()`
+  before a company can view a student's profile (only if that student
+  applied to one of their postings)
+- `get_or_create` on `JobApplication` so duplicate applications to the
+  same posting are idempotent
+
+The navbar in `base.html` conditionally renders links — companies see
+"Create Job Post" and their profile; students see their profile; guests
+see Register and Login.
+
+Django admin is customized (`internLINK Admin` header) with all models
+registered for back-office access.
+
+## Core flows
+
+### Student path
+
+1. Register with `is_student=True` → `Student` profile auto-created
+2. Fill academic details (CGPA, branch, batch, resume upload) via
+   `StudentUpdateForm` on `/student_profile/<username>/`
+3. Browse a company's public profile and job listings
+4. View a job at `/company_profile/<username>/job_profile/<job_id>/`
+5. Click **Apply Now** → `JobApplication.objects.get_or_create(student, JobPosting)`
+6. Track applications on the student dashboard; withdraw via delete
+
+### Company path
+
+1. Register with `is_company=True` → `Company` profile auto-created
+2. Create postings at `/company_profile/<username>/create_job_post/`
+3. Manage listings from the company dashboard — edit, delete, or open
+   **Edit Details / View Applicants**
+4. On the update view, query `JobApplication.objects.filter(JobPosting=...)`
+   to list every student who applied, with full profile cards (CGPA,
+   branch, resume link, contact info)
+5. Drill into an applicant's profile only if they applied to that company's posting
+
+### Public pages
+
+- **Home** (`/`) — company directory (card grid linking to profiles)
+- **Our Students** (`/ourstudents/`) — students with `job_status='Employed'`
+- **About Us** (`/aboutus/`) — project overview and team credits
+
+## URL design
+
+Routes are grouped by concern in `internLINK/urls.py`:
+
+| Route | Purpose |
+| --- | --- |
+| `/register/`, `/login/`, `/logout/` | Auth |
+| `/student_profile/<username>/` | Student dashboard + profile edit |
+| `/company_profile/<username>/` | Company dashboard + public view |
+| `/company_profile/<username>/create_job_post/` | New posting |
+| `/company_profile/<username>/job_profile/<uuid>/` | Job detail + apply |
+| `/company_profile/<username>/job_profile/<uuid>/update/` | Edit + view applicants |
+| `/company_profile/<username>/job_profile/<uuid>/delete/` | Remove posting |
+| `/apply_job/<uuid>/` | One-click application |
+| `/view_applications/delete/<id>/` | Withdraw application |
+
+UUID path converters on `job_id` keep job URLs type-safe at the routing layer.
+
+## Schema evolution
+
+The migration history tells the story of iterative development:
+
+1. `0001_initial` — `CustomUser`, `Company`, `Student`, `JobPosting`,
+   `JobApplication` in one shot
+2. `0002`–`0005` — field constraint tweaks (CGPA nullability, enrollment
+   number uniqueness, email changes)
+3. `0003_jobapplication` — formalized the application join table with
+   proper foreign keys
+
+The repo still carries merge-conflict markers in a few files (`models.py`,
+`views.py`, `forms.py`) from parallel development branches — a honest
+artifact of two developers working on auth refactoring simultaneously.
+
+## What I'd highlight
+
+- **Custom user model from day one** (eventually) — understanding when
+  `AUTH_USER_MODEL` must be set before the first migration, and why
+  profile extension via OneToOne beats stuffing nullable columns onto
+  `User`
+- **Authorization at the view layer** — not just "is logged in" but
+  "does this company own this posting" and "did this student apply to
+  us before we show their resume"
+- **Idempotent applications** — `get_or_create` prevents duplicate rows
+  when a student hits Apply twice
+- **Validation at the model** — forms can be bypassed; validators on
+  `Student.batch`, `Student.resume`, and `Student.cgpa` protect the DB
+- **File upload pipeline** — `enctype="multipart/form-data"` on profile
+  forms, `MEDIA_ROOT` for storage, Pillow in the dependency tree for
+  image handling
+- **Trade-offs we accepted** — SQLite for simplicity, server-rendered
+  templates over a SPA, role flags (`is_student` / `is_company`) over
+  Django Groups for a two-role system
+
+## What's not in v1
+
+Being precise about scope matters: there is no SMTP/email notification
+layer, no REST API, no search endpoint (noted in a URL comment but not
+built), and no automated matching between student skills and job
+requirements. The `view_applications` view exists but its template was
+never added — applications are surfaced through the profile dashboards
+instead.
+
+Those gaps are the natural next steps if this were productionized:
+PostgreSQL, Celery + email on status change, and a proper applicant
+filter (branch, CGPA threshold, semester).
