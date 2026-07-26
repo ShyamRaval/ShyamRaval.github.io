@@ -23,9 +23,9 @@ export const timeline: TimelineEntry[] = [
   },
   {
     year: "2025",
-    title: "Started working at Shievon.in as a Software Developer",
+    title: "First job at Shievon.in",
     description:
-      "Started working at Shievon.in as a Software Developer.",
+      "Started working at Shievon.in formerly known as Schonity.",
     kind: "work",
   },
   {

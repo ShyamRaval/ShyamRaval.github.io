@@ -4,6 +4,7 @@
  *
  * The optional `label` renders as a small handwritten note in the left column
  * on desktop and stacks above content on mobile (see .row-editorial in global.css).
+ * Pass `stacked` to keep label above content at every breakpoint.
  * No "eyebrow / title / intro" trio — pages compose their own headings inline.
  */
 import { type Accent, inkClass } from "../lib/accents";
@@ -13,6 +14,8 @@ interface Props {
   label?: string;
   labelAccent?: Accent;
   size?: "default" | "lg";
+  /** Label above content at all widths (no side-by-side editorial grid). */
+  stacked?: boolean;
   class?: string;
 }
 
@@ -21,6 +24,7 @@ const {
   label,
   labelAccent = "coral",
   size = "default",
+  stacked = false,
   class: className = "",
 } = Astro.props;
 
@@ -29,8 +33,14 @@ const sizeClass = size === "lg" ? "section-lg" : "section";
 <section id={id} class:list={[sizeClass, className]}>
   <div class="container-page">
     {label ? (
-      <div class="row-editorial">
-        <p class:list={["font-hand text-2xl md:text-3xl md:sticky md:top-24 md:self-start", inkClass(labelAccent)]}>
+      <div class:list={[stacked ? "row-editorial-stack" : "row-editorial"]}>
+        <p
+          class:list={[
+            "font-hand text-2xl md:text-3xl",
+            !stacked && "md:sticky md:top-24 md:self-start",
+            inkClass(labelAccent),
+          ]}
+        >
           {label}
         </p>
         <div>

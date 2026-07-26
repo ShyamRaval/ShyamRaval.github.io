@@ -57,11 +57,11 @@ const featuredProjects = await getFeaturedProjects(3);
   </section>
 
   {/* ============================================================
-      ABOUT — handwritten label on the left, prose on the right.
+      ABOUT — handwritten label above, prose below (stacked).
       Replaces the previous 3-card "values" trio (template thinking
       we no longer want; see PLAN.md Design Philosophy).
      ============================================================ */}
-  <Section id="about" label="a bit about me" labelAccent="sky">
+  <Section id="about" label="a bit about me" labelAccent="sky" stacked>
     <div class="prose-clean max-w-2xl">
       <p class="text-base md:text-lg leading-relaxed text-[color:var(--color-ink-soft)]">
         I care about thoughtful interfaces, fast websites, and the small details
@@ -86,7 +86,7 @@ const featuredProjects = await getFeaturedProjects(3);
   {/* ============================================================
       TIMELINE — handwritten label on the left, entries on the right.
      ============================================================ */}
-  <Section id="timeline" label="how I got here" labelAccent="mint">
+  <Section id="timeline" label="how I got here" labelAccent="mint" stacked>
     <div class="max-w-2xl">
       <Timeline entries={timeline} />
     </div>
@@ -96,7 +96,7 @@ const featuredProjects = await getFeaturedProjects(3);
       RECENT WORK — handwritten label on the left, compact card grid
       on the right. No "Browse all" CTA: header nav handles it.
      ============================================================ */}
-  <Section id="featured" label="recent work" labelAccent="butter">
+  <Section id="featured" label="recent work" labelAccent="butter" stacked>
     <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 items-start reveal-stagger list-none p-0">
       {featuredProjects.map((entry) => (
         <li class="self-start"><ProjectCard entry={entry} size="compact" /></li>
